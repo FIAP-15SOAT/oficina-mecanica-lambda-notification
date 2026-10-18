@@ -1,0 +1,47 @@
+node_modules
+dist
+
+# Keep environment variables out of version control
+.env
+
+# Signing keys: never versioned, in either half
+*.pem
+
+# IDE
+.vscode
+.idea
+
+# Diagram sources: editable files live outside the repository
+docs/diagrams/*.drawio
+
+# Coverage
+coverage
+
+# Packaging artifacts
+*.zip
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+crash.log
+crash.*.log
+infra/build/
+
+# Sensitive credentials
+terraform.tfvars
+
+# Git worktrees
+.worktrees
+
+CLAUDE.md
+.claude
+.codex
+.agent
+.agents
+.github/*
+!.github/workflows/
+!.github/actions/
+openspec/
+superpowers/
