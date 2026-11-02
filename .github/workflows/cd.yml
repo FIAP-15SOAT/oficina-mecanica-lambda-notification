@@ -54,7 +54,7 @@ jobs:
           set -euo pipefail
 
           if [ "${ENABLE_TELEMETRY_COLLECTION}" = "true" ] && [ -z "${DD_API_KEY}" ]; then
-            echo "::error::DD_API_KEY não está configurado nos segredos do environment production, mas ENABLE_TELEMETRY_COLLECTION está ligada."
+            echo "::error::DD_API_KEY não está configurado nos segredos da organização, mas ENABLE_TELEMETRY_COLLECTION está ligada."
             exit 1
           fi
 
