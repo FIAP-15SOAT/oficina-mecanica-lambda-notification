@@ -4,6 +4,8 @@ A infraestrutura desta função é escrita em Terraform e fica em `infra/`, no
 mesmo repositório do código: uma mudança na função e na configuração dela passa
 pela mesma revisão.
 
+![Infraestrutura: esta stack cria a função, o event source mapping da fila notification.fifo, o security group sem entrada e o grupo de log; VPC e subnets privadas vêm do infra-base, NLB interno e MailHog do infra-k8s, tópico, fila e DLQ do infra-messaging](diagrams/infrastructure.png)
+
 ## O que esta stack cria
 
 | Recurso | Dono | Observação |

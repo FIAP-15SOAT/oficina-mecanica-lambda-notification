@@ -37,6 +37,8 @@ Hoje o destino dos e-mails é o **MailHog**, um servidor SMTP de teste que roda 
 cluster Kubernetes da solução: ele aceita os e-mails e os mostra numa caixa de
 entrada web, sem entregá-los a endereços reais.
 
+![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch e, com a layer opcional do Datadog, no Datadog](docs/diagrams/infrastructure.png)
+
 ## 🎯 Responsabilidade
 
 **O que a função faz**
@@ -151,6 +153,10 @@ Todos rodam a partir de `app/`.
 │   └── package.json            # Dependências e comandos npm
 ├── docs/
 │   ├── adr/                    # Registros de decisões de arquitetura (ADRs)
+│   ├── diagrams/
+│   │   ├── cd-workflow.png     # Jobs e steps do workflow de CD
+│   │   ├── ci-workflow.png     # Jobs e steps do workflow de CI
+│   │   └── infrastructure.png  # Tópico, fila, DLQ, função, NLB e MailHog
 │   ├── architecture.md         # Camadas, montagem das dependências e fluxo de uma mensagem
 │   ├── ci-cd.md                # Workflows, jobs, steps e configuração do GitHub
 │   ├── contracts.md            # Formato da mensagem, validação e resposta

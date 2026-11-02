@@ -22,6 +22,8 @@ o controle do nome das branches.
 Seis verificações rodam em paralelo. Se todas passam, um bot — um GitHub App da
 organização — abre o Pull Request para a `main`.
 
+![Workflow de CI: os jobs Lint, Type Check, Unit Tests, E2E Tests, Package e Terraform Validation rodam em paralelo, cada um com seus steps numerados, e convergem por needs no job Open Pull Request, que abre o PR para a main](diagrams/ci-workflow.png)
+
 | Job | O que prova | O que o reprova |
 | --- | --- | --- |
 | `Lint` | O código segue a formatação e as regras de importação entre camadas | Formatação diferente, ou `domain/`/`application/` importando infraestrutura |
@@ -124,6 +126,8 @@ execuções chegarem enquanto uma roda, só a mais recente espera; as
 intermediárias são descartadas.
 
 ### Dois jobs
+
+![Workflow de CD: o push na main ou a execução manual passa pela condição de branch e da variable ENABLE_DEPLOY e roda o job Deploy Lambda (13 steps), ligado por needs: deploy ao job Post-Deploy Gates (3 steps: credenciais AWS, execução da função com mensagem de teste e e-mail conferido no MailHog do cluster)](diagrams/cd-workflow.png)
 
 | Job | O que faz | Quando roda |
 | --- | --- | --- |
