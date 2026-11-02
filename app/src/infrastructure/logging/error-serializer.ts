@@ -25,10 +25,6 @@ export function describeError(error: unknown): ExceptionAttributes {
   };
 }
 
-export function resolveErrorType(error: unknown): string {
-  return resolveChainErrorType(collectCauseChain(error));
-}
-
 function resolveChainErrorType(chain: ErrorChainEntry[]): string {
   const specific = chain.find((entry) => !GENERIC_ERROR_NAMES.has(entry.name));
 

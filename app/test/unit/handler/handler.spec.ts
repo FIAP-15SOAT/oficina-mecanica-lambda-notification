@@ -48,6 +48,7 @@ describe('handler', () => {
     dependenciesMock.mockReturnValue({
       sendEmailController: new SendEmailController(new SendEmailUseCase(emailSender)),
     });
+
     baseLoggerMock.mockReturnValue(capture.adapter);
   });
 
@@ -64,11 +65,13 @@ describe('handler', () => {
     );
 
     expect(response).toEqual({ batchItemFailures: [] });
+
     expect(emailSender.send.mock.calls.map(([message]) => message.subject)).toEqual([
       'first',
       'second',
       'third',
     ]);
+
     expect(capture.lines()).toEqual(
       envelopes.map((envelope) =>
         expect.objectContaining({
@@ -98,7 +101,9 @@ describe('handler', () => {
         { itemIdentifier: records[2].messageId },
       ],
     });
+
     expect(emailSender.send).toHaveBeenCalledTimes(2);
+
     expect(capture.lines()).toEqual([
       expect.objectContaining({ 'oficina.event.name': 'notification.sent' }),
       expect.objectContaining({
@@ -125,6 +130,7 @@ describe('handler', () => {
 
     expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: records[1].messageId }] });
     expect(emailSender.send).toHaveBeenCalledTimes(3);
+
     expect(capture.lines().map((line) => line['oficina.event.name'])).toEqual([
       'notification.sent',
       'notification.failed',
@@ -163,6 +169,7 @@ describe('handler', () => {
 
       expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: record.messageId }] });
       expect(emailSender.send).not.toHaveBeenCalled();
+
       expect(capture.lines()).toEqual([
         expect.objectContaining({
           'oficina.event.name': 'notification.failed',
@@ -182,6 +189,7 @@ describe('handler', () => {
 
     expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: record.messageId }] });
     expect(emailSender.send).not.toHaveBeenCalled();
+
     expect(capture.lines()).toEqual([
       expect.objectContaining({
         'oficina.event.name': 'notification.failed',

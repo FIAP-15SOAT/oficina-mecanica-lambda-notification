@@ -76,8 +76,8 @@ bem-intencionada não desfaça uma decisão sem que algum teste falhe.
 | O propósito é lido mesmo quando o resto do payload é inválido | `notification-message.parser.spec.ts` e `handler.spec.ts` |
 | Quando uma mensagem falha, ela e as seguintes do mesmo grupo voltam sem serem tentadas; as de outro grupo são enviadas | `handler.spec.ts` |
 | A falha no quinto recebimento sai como `dead_lettered` | `handler.spec.ts` |
-| O cliente SMTP conecta sem TLS e com limites de 2 s para conexão, saudação e resposta | `smtp-email-sender.spec.ts` |
-| Uma montagem de dependências que falhou é tentada de novo na execução seguinte | `bootstrap.spec.ts` |
+| O cliente SMTP conecta sem TLS, com limites de 2 s para conexão, saudação e resposta, e sem ler arquivo nem URL como conteúdo | `smtp-email-sender.spec.ts` |
+| Uma montagem de dependências que falhou registra `app.configuration.invalid` ou `app.initialization.failed` e é tentada de novo na execução seguinte | `bootstrap.spec.ts` |
 | O pacote gerado carrega **sem nenhuma dependência instalada**, fora da pasta do repositório | job `Package` do CI |
 
 ## Cobertura
@@ -85,11 +85,11 @@ bem-intencionada não desfaça uma decisão sem que algum teste falhe.
 100% em linhas, instruções, funções e ramos, exigido pelo `coverageThreshold` de
 `app/jest.config.ts`: `npm run test:cov` falha abaixo disso.
 
-Ficam fora da conta só arquivos sem lógica para testar:
+Ficam fora da conta o ponto de montagem e arquivos sem lógica para testar:
 
 | Arquivos | Por quê |
 | --- | --- |
-| `src/bootstrap.ts` | Só monta as dependências. Tem teste próprio, que não entra na métrica |
+| `src/bootstrap.ts` | Monta as dependências e, se a montagem falha, registra `app.configuration.invalid` (configuração inválida) ou `app.initialization.failed` (outra falha). O teste próprio cobre os dois eventos e a nova tentativa, mas não entra na métrica |
 | `src/**/*.interface.ts` | Interfaces: só tipos, que somem na compilação |
 | `src/**/*.catalog.ts` | Catálogos de eventos de log: só dados |
 

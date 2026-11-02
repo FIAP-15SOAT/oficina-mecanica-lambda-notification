@@ -169,9 +169,11 @@ frente (consertar o MailHog, por exemplo), não reverter.
 **1. Executar a função publicada.** O step monta com `jq` um evento igual ao que
 a AWS Lambda entrega quando lê a fila, com uma mensagem `notification.email.send`
 válida: destinatário `post-deploy-gate@oficina.local`, assunto
-`post-deploy-gate-<id da execução do workflow>`, `purpose` igual a
-`post_deploy_gate`, sem OS e sem `traceparent`. A mensagem não passa pela fila:
-o step chama a função direto, com `aws lambda invoke`.
+`post-deploy-gate-<id da execução do workflow>-<número da tentativa>`, `purpose`
+igual a `post_deploy_gate`, sem OS e sem `traceparent`. O número da tentativa
+muda a cada *re-run* da mesma execução, e assim a segunda verificação não
+encontra o e-mail de uma tentativa anterior. A mensagem não passa pela fila: o
+step chama a função direto, com `aws lambda invoke`.
 
 | Resultado | Significa |
 | --- | --- |

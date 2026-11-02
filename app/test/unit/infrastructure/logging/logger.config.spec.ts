@@ -12,6 +12,7 @@ describe('resolveLoggerConfig', () => {
     const config = resolveLoggerConfig({});
 
     expect(config.level).toBe(DEFAULT_LOG_LEVEL);
+
     expect(config.resource).toEqual({
       'service.name': DEFAULT_SERVICE_NAME,
       'service.namespace': DEFAULT_SERVICE_NAMESPACE,
@@ -30,6 +31,7 @@ describe('resolveLoggerConfig', () => {
     });
 
     expect(config.level).toBe('warn');
+
     expect(config.resource).toEqual({
       'service.name': 'notification',
       'service.namespace': 'oficina',

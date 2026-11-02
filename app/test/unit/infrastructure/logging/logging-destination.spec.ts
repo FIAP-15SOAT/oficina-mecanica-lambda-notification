@@ -12,9 +12,11 @@ describe('createDefaultDestination', () => {
 
   beforeEach(() => {
     stream = new EventEmitter();
+
     destinationSpy = jest
       .spyOn(pino, 'destination')
       .mockReturnValue(stream as unknown as ReturnType<typeof pino.destination>);
+
     stderr = captureDiagnostics();
   });
 

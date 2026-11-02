@@ -31,7 +31,8 @@ dependências. A decisão é qual dos dois padrões esta função segue.
   (`SendEmailController`) e `infrastructure` (leitura da fila, SMTP, logging e
   configuração). As regras do ESLint que impedem uma camada interna de importar
   infraestrutura são as mesmas, com o `nodemailer` no lugar das bibliotecas da
-  customer-auth.
+  customer-auth, mais uma que a customer-auth não tem: `interface-adapters` também
+  não pode importar biblioteca nem arquivo de infraestrutura.
 - **Dependências montadas uma vez, de forma síncrona,** em `src/bootstrap.ts`.
   Não há segredo a buscar nem conexão a abrir, então, diferente da customer-auth,
   nada é preparado antes da primeira mensagem. Uma montagem que falha é tentada

@@ -19,7 +19,7 @@ describe('SmtpEmailSender', () => {
     sender = new SmtpEmailSender(transporter, SENDER);
   });
 
-  it('should build a transport without tls and with 2 s timeouts', () => {
+  it('should build a transport without tls, with 2 s timeouts and without file or url content', () => {
     SmtpEmailSender.create({ SMTP_HOST: 'mailhog.internal', SMTP_PORT: 1025, MAIL_FROM: SENDER });
 
     expect(createTransport).toHaveBeenCalledWith({
@@ -30,6 +30,8 @@ describe('SmtpEmailSender', () => {
       connectionTimeout: 2000,
       greetingTimeout: 2000,
       socketTimeout: 2000,
+      disableFileAccess: true,
+      disableUrlAccess: true,
     });
   });
 

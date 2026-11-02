@@ -40,6 +40,7 @@ describe('normalizeLogRecord', () => {
         'exception.type': 'TypeError',
         'exception.message': 'quebrou',
       });
+
       expect(normalized).not.toHaveProperty(key);
     },
   );
@@ -63,6 +64,7 @@ describe('normalizeLogRecord', () => {
     expect(normalizeLogRecord(record)).toEqual({
       'messaging.destination.name': 'notification.fifo',
     });
+
     expect(String(stderr.spy.mock.calls[0][0])).toContain(
       '"oficina.logging.failure.error_type":"RangeError"',
     );

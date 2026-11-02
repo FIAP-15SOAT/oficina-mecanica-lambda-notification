@@ -43,9 +43,15 @@ tempo; e o que fazer com uma mensagem inválida.
 O mapping usa `batch_size = 1` e `function_response_types =
 ["ReportBatchItemFailures"]` (a função devolve a lista das mensagens que
 falharam, e as demais são confirmadas). Assim, uma falha segura só o próprio
-grupo, e os 5 s sempre bastam: há um único envio, e cada etapa SMTP tem no
-máximo 2 s. A falha volta na lista `batchItemFailures`, e não como erro da
-função.
+grupo, e os 5 s bastam no caso normal: há um único envio, e cada etapa SMTP
+pode ficar no máximo 2 s sem resposta. A falha volta na lista
+`batchItemFailures`, e não como erro da função. O limite de 2 s mede o tempo
+sem resposta, não a duração do envio: um servidor que demore quase 2 s em cada
+etapa (saudação, `EHLO`, `MAIL`, `RCPT`, `DATA`) pode estourar os 5 s. Aí a
+execução termina por tempo limite, sem a linha `notification.failed` — aparece
+como erro da função nas métricas da AWS Lambda — e a mensagem volta à fila. O
+MailHog do cluster responde rápido ou recusa a conexão, por isso esse caso não é
+esperado.
 
 ### 2. A ordem por grupo também no código
 
@@ -92,12 +98,14 @@ das anteriores (`retry`).
 
 **Positivas.** Um e-mail com problema não atrasa nem embaralha os de outros
 grupos, e dentro de um grupo a ordem vale para qualquer número de mensagens por
-execução. O envio sempre cabe no tempo limite. Nada chega à DLQ sem ter sido
-tentado cinco vezes, e o que está lá pode ser analisado.
+execução. O envio cabe no tempo limite no caso normal. Nada chega à DLQ sem
+ter sido tentado cinco vezes, e o que está lá pode ser analisado.
 
 **Negativas.** Uma execução por e-mail, mais que com várias mensagens por
 execução — sem custo relevante no volume da oficina. Uma mensagem inválida gera
-cinco linhas de `notification.failed` antes de chegar à DLQ.
+cinco linhas de `notification.failed` antes de chegar à DLQ. Um servidor SMTP
+lento em todas as etapas pode estourar os 5 s, e essa execução falha sem a
+linha `notification.failed`.
 
 **Aceitas.** Se a função estourar o tempo depois de o servidor aceitar o e-mail,
 a mensagem volta e o e-mail pode sair duas vezes — cada e-mail é entregue pelo

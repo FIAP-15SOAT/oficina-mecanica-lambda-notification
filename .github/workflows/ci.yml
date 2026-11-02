@@ -151,9 +151,9 @@ jobs:
         run: |
           # shellcheck disable=SC2016 # the backticks are Markdown, not command substitution
           {
-            echo '### Terraform plan — skipped ⏭️'
+            echo '### Plano do Terraform — pulado ⏭️'
             echo ''
-            echo 'The target environment appears to be unavailable, so `terraform plan` was skipped. **This does not block CI** — `fmt` and `validate` passed. Re-run once the environment is back up to preview the plan.'
+            echo 'O ambiente de destino parece indisponível, então o `terraform plan` foi pulado. **Isso não bloqueia o CI**: `fmt` e `validate` passaram. Rode o job de novo com o ambiente no ar para ver o plano.'
           } >> "$GITHUB_STEP_SUMMARY"
 
   open-pr:
@@ -186,11 +186,11 @@ jobs:
           set -euo pipefail
           existing="$(gh pr list --head "${HEAD_BRANCH}" --base main --state open --json number --jq 'length')"
           if [[ "${existing}" != "0" ]]; then
-            echo "An open PR already exists for ${HEAD_BRANCH} -> main; nothing to do."
+            echo "Já existe um PR aberto de ${HEAD_BRANCH} para main; nada a fazer."
             exit 0
           fi
           gh pr create \
             --base main \
             --head "${HEAD_BRANCH}" \
             --title "${HEAD_BRANCH}" \
-            --body "Automated PR opened by CI on behalf of @${ACTOR} after all checks passed on \`${HEAD_BRANCH}\`."
+            --body "PR aberto automaticamente pelo CI em nome de @${ACTOR}, depois que todas as verificações passaram em \`${HEAD_BRANCH}\`."

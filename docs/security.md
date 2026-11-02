@@ -27,7 +27,7 @@ A criptografia e a retenção são configuradas no repositório de mensageria
 | Conteúdo do e-mail no log | Uma linha de log com assunto, texto, HTML ou endereço | Esses dados não estão na lista de campos de log permitidos; um teste confere que não aparecem |
 | Destinatário no log pela resposta do servidor | O servidor responde `550 <maria@example.com>: ...` | O adaptador SMTP troca o erro original por `EmailDeliveryException`, sem o texto do servidor; o log registra só o motivo `smtp_error` |
 | Conteúdo no log pelo propósito | O serviço escreve algo indevido em `purpose` | Só um valor de letras minúsculas separadas por `_` vai ao log; qualquer outro vira `unspecified` |
-| Envio de um arquivo do servidor por e-mail | `html` ou `text` como `{ "path": ... }` ou `{ "href": ... }`, que o `nodemailer` leria | A validação exige texto; a mensagem é recusada com `invalid_message` |
+| Envio de um arquivo do servidor por e-mail | `html` ou `text` como `{ "path": ... }` ou `{ "href": ... }`, que o `nodemailer` leria | A validação exige texto; a mensagem é recusada com `invalid_message`. O transporte também não lê arquivo nem URL |
 | E-mail para destinatário não conferido | `to` com vírgula, `;` ou nome de exibição, que o `nodemailer` dividiria em vários endereços | Cada item precisa ser um único endereço |
 | Serviço com defeito enchendo a fila | Muitas mensagens de uma vez | No máximo 10 execuções ao mesmo tempo; o volume aparece em `notification.sent` e as falhas, na DLQ |
 | E-mail repetido | A função é interrompida depois de o servidor aceitar o e-mail | Aceito: cada e-mail é entregue pelo menos uma vez, e uma repetição não altera dados |
@@ -54,6 +54,9 @@ um arquivo local ou uma URL, e leria o conteúdo para colocá-lo no e-mail. Um
 serviço com defeito, ou uma mensagem forjada na fila, poderia assim mandar por
 e-mail um arquivo do ambiente da função ou a resposta de um endereço interno da
 rede. A mensagem é recusada antes do envio, e um teste cobre os dois casos.
+Além disso, o transporte do `nodemailer` é criado com a leitura de arquivo e de
+URL desligada (opções `disableFileAccess` e `disableUrlAccess`): se um objeto
+passasse pela validação, o envio falharia em vez de ler o conteúdo.
 
 ## Rede
 

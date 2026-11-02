@@ -1,4 +1,5 @@
 import { ConfigurationException } from '@infrastructure/exceptions/configuration.exception';
+import { SmtpEmailSender } from '@infrastructure/smtp/smtp-email-sender';
 
 import { getDependencies, resetDependencies } from '../../../src/bootstrap';
 
@@ -51,9 +52,26 @@ describe('bootstrap', () => {
     expect(() => getDependencies()).toThrow(ConfigurationException);
 
     expect(mockLines).toHaveLength(1);
+
     expect(JSON.parse(mockLines[0])).toEqual(
       expect.objectContaining({ 'oficina.event.name': 'app.configuration.invalid' }),
     );
+  });
+
+  it('should log app.initialization.failed and rethrow when a dependency cannot be built', () => {
+    const createSpy = jest.spyOn(SmtpEmailSender, 'create').mockImplementation(() => {
+      throw new TypeError('transporte indisponível');
+    });
+
+    expect(() => getDependencies()).toThrow(TypeError);
+
+    expect(mockLines).toHaveLength(1);
+
+    expect(JSON.parse(mockLines[0])).toEqual(
+      expect.objectContaining({ 'oficina.event.name': 'app.initialization.failed' }),
+    );
+
+    createSpy.mockRestore();
   });
 
   it('should compose again after a failed composition', () => {

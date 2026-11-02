@@ -33,17 +33,19 @@ As regras ficam no centro; os detalhes técnicos (AWS, SMTP, log) ficam na borda
 | --- | --- | --- |
 | `domain` | `EmailMessage`, o objeto que representa um e-mail válido: ao menos um destinatário, cada um um endereço só, assunto, texto e HTML preenchidos. Também o tipo de `notification.email.send`, copiado do catálogo de mensagens do Work Order. | Conhecer fila, SMTP, AWS ou log. |
 | `application` | O caso de uso `SendEmailUseCase` — a operação "enviar um e-mail" —, as interfaces (portas) de que ele precisa e o catálogo de eventos de log. | Importar biblioteca de infraestrutura. |
-| `interface-adapters` | `SendEmailController`: chama o caso de uso e traduz o resultado em "enviado" ou "falhou, por tal motivo". Não depende de framework. | Conhecer o formato do evento da AWS Lambda. |
+| `interface-adapters` | `SendEmailController`: chama o caso de uso e traduz o resultado em "enviado" ou "falhou, por tal motivo". Não depende de framework. | Importar biblioteca de infraestrutura ou conhecer o formato do evento da AWS Lambda. |
 | `infrastructure` | Ler a mensagem da fila, enviar por SMTP, ler a configuração e escrever o log. É o **único** lugar que conhece a AWS Lambda. | — |
 
 ### Regras de importação verificadas pelo lint
 
 As fronteiras entre camadas não dependem só de disciplina: o
-`app/eslint.config.mjs` tem duas regras que fazem o `npm run lint` falhar quando
+`app/eslint.config.mjs` tem três regras que fazem o `npm run lint` falhar quando
 são quebradas.
 
 - `domain/` e `application/` não podem importar `aws-lambda`, `nodemailer`,
   `pino` nem arquivos de `infrastructure/` ou `interface-adapters/`.
+- `interface-adapters/` não pode importar `aws-lambda`, `nodemailer`, `pino` nem
+  arquivos de `infrastructure/`.
 - Os tipos do evento da AWS Lambda (`aws-lambda`) só podem ser importados em
   `src/infrastructure/serverless/` e em `src/handler.ts`, o ponto de entrada.
 
@@ -78,8 +80,7 @@ A AWS Lambda não cria um processo novo a cada execução. Ela mantém um **ambi
 de execução** — um contêiner com o processo Node.js já carregado — e o reaproveita
 nas execuções seguintes enquanto houver mensagens. Por isso os objetos da função
 (configuração, cliente SMTP, caso de uso, controller) são montados **uma vez por
-ambiente** e guardados em memória: é a "composição memoizada" de
-`app/src/bootstrap.ts`.
+ambiente** e guardados em memória por `app/src/bootstrap.ts`.
 
 A montagem é **síncrona**: não há segredo a buscar nem conexão a abrir antes da
 primeira mensagem. O `nodemailer` só abre a conexão SMTP na hora do envio.

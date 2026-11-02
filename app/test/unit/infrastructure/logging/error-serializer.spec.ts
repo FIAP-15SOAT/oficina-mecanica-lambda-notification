@@ -1,8 +1,4 @@
-import {
-  describeError,
-  resolveErrorMessage,
-  resolveErrorType,
-} from '@infrastructure/logging/error-serializer';
+import { describeError, resolveErrorMessage } from '@infrastructure/logging/error-serializer';
 import { REDACTED } from '@infrastructure/logging/redaction/text-sanitizer';
 
 class DatabaseOperationFailure extends Error {
@@ -12,13 +8,7 @@ class DatabaseOperationFailure extends Error {
   }
 }
 
-describe('resolveErrorType', () => {
-  it('should use the name of a specific error', () => {
-    expect(resolveErrorType(new DatabaseOperationFailure('falhou'))).toBe(
-      'DatabaseOperationFailure',
-    );
-  });
-
+describe('describeError exception.type', () => {
   /**
    * When a library wraps the real error in a generic `Error`, the useful name is
    * further down the chain — reporting `"Error"` would hide which layer broke.
@@ -28,30 +18,30 @@ describe('resolveErrorType', () => {
       cause: new DatabaseOperationFailure('conexão perdida'),
     });
 
-    expect(resolveErrorType(wrapped)).toBe('DatabaseOperationFailure');
+    expect(describeError(wrapped)['exception.type']).toBe('DatabaseOperationFailure');
   });
 
   it('should fall back to the generic name when the whole chain is generic', () => {
-    expect(resolveErrorType(new Error('genérico'))).toBe('Error');
+    expect(describeError(new Error('genérico'))['exception.type']).toBe('Error');
   });
 
   it('should classify a thrown string', () => {
-    expect(resolveErrorType('falhou')).toBe('Error');
+    expect(describeError('falhou')['exception.type']).toBe('Error');
   });
 
   it('should classify a thrown value that is neither error nor string', () => {
-    expect(resolveErrorType({ code: 42 })).toBe('UnknownError');
+    expect(describeError({ code: 42 })['exception.type']).toBe('UnknownError');
   });
 
   it('should report an unknown type when there is nothing to inspect', () => {
-    expect(resolveErrorType(undefined)).toBe('UnknownError');
+    expect(describeError(undefined)['exception.type']).toBe('UnknownError');
   });
 
   it('should use the constructor name when the error carries an empty name', () => {
     const anonymous = new Error('sem nome');
     anonymous.name = '';
 
-    expect(resolveErrorType(anonymous)).toBe('Error');
+    expect(describeError(anonymous)['exception.type']).toBe('Error');
   });
 });
 

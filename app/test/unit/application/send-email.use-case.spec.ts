@@ -18,6 +18,7 @@ describe('SendEmailUseCase', () => {
     await useCase.execute(VALID_PAYLOAD);
 
     expect(emailSender.send).toHaveBeenCalledTimes(1);
+
     expect(emailSender.send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: VALID_PAYLOAD.to,

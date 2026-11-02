@@ -2,7 +2,6 @@ import {
   DESTINATION_FAILURE_POLICY,
   reportDestinationFailure,
   reportLoggingFailure,
-  runSafely,
   runSafelyVoid,
 } from '@infrastructure/logging/logging-diagnostics';
 import { resolveLoggerConfig } from '@infrastructure/logging/logger.config';
@@ -25,14 +24,15 @@ describe('reportLoggingFailure', () => {
   it('should write a single fixed JSON line to stderr', () => {
     const stderr = captureStderr();
 
-    reportLoggingFailure('sanitization');
+    reportLoggingFailure('serialization');
 
     expect(stderr.spy).toHaveBeenCalledTimes(1);
+
     expect(writtenLines(stderr)[0]).toMatchObject({
       timestamp: expect.any(String),
       level: 'error',
       message: 'logging failure',
-      'oficina.logging.failure.stage': 'sanitization',
+      'oficina.logging.failure.stage': 'serialization',
     });
 
     stderr.restore();
@@ -82,6 +82,7 @@ describe('reportDestinationFailure', () => {
     reportDestinationFailure();
 
     expect(stderr.spy).toHaveBeenCalledTimes(1);
+
     expect(writtenLines(stderr)[0]).toMatchObject({
       'oficina.logging.failure.stage': 'destination',
       'oficina.logging.failure.policy': DESTINATION_FAILURE_POLICY,
@@ -92,50 +93,6 @@ describe('reportDestinationFailure', () => {
 
   it('should declare continue-degraded as the policy', () => {
     expect(DESTINATION_FAILURE_POLICY).toBe('continue-degraded');
-  });
-});
-
-describe('runSafely', () => {
-  it('should return the operation result when nothing throws', () => {
-    expect(runSafely('emit', () => 'ok', 'fallback')).toBe('ok');
-  });
-
-  it('should return the fallback and report the error type when the operation throws', () => {
-    const stderr = captureStderr();
-
-    const result = runSafely(
-      'serialization',
-      () => {
-        throw new TypeError('quebrou');
-      },
-      'fallback',
-    );
-
-    expect(result).toBe('fallback');
-    expect(writtenLines(stderr)[0]).toMatchObject({
-      'oficina.logging.failure.stage': 'serialization',
-      'oficina.logging.failure.error_type': 'TypeError',
-    });
-
-    stderr.restore();
-  });
-
-  it('should describe a thrown non-error by its type', () => {
-    const stderr = captureStderr();
-
-    runSafely(
-      'config',
-      () => {
-        throw 'texto solto';
-      },
-      undefined,
-    );
-
-    expect(writtenLines(stderr)[0]).toMatchObject({
-      'oficina.logging.failure.error_type': 'string',
-    });
-
-    stderr.restore();
   });
 });
 
@@ -156,7 +113,22 @@ describe('runSafelyVoid', () => {
         throw new Error('quebrou');
       }),
     ).not.toThrow();
+
     expect(stderr.spy).toHaveBeenCalledTimes(1);
+
+    stderr.restore();
+  });
+
+  it('should describe a thrown non-error by its type', () => {
+    const stderr = captureStderr();
+
+    runSafelyVoid('emit', () => {
+      throw 'texto solto';
+    });
+
+    expect(writtenLines(stderr)[0]).toMatchObject({
+      'oficina.logging.failure.error_type': 'string',
+    });
 
     stderr.restore();
   });

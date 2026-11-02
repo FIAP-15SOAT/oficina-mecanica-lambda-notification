@@ -110,4 +110,21 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ['src/interface-adapters/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [...INFRASTRUCTURE_LIBRARIES, '@infrastructure/*'],
+              message:
+                'interface-adapters/ é o anel de adaptadores livre de framework: não importe aws-lambda, nodemailer, pino nem módulos de @infrastructure.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );

@@ -7,8 +7,7 @@ import { resolveLoggerConfig } from './logger.config';
  */
 process.stderr.on('error', () => undefined);
 
-export type LoggingFailureStage =
-  'config' | 'sanitization' | 'serialization' | 'emit' | 'bootstrap' | 'destination';
+export type LoggingFailureStage = 'serialization' | 'emit' | 'destination';
 
 export const DESTINATION_FAILURE_POLICY = 'continue-degraded';
 
@@ -65,16 +64,6 @@ function writeDiagnostic(attributes: Record<string, string>): void {
     );
   } catch {
     return;
-  }
-}
-
-export function runSafely<T>(stage: LoggingFailureStage, operation: () => T, fallback: T): T {
-  try {
-    return operation();
-  } catch (error) {
-    reportLoggingFailure(stage, { errorType: resolveErrorTypeName(error) });
-
-    return fallback;
   }
 }
 

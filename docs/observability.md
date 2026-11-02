@@ -103,7 +103,7 @@ Depois de uma execução — a verificação do CD faz uma —, conferir no Data
    `oficina.notification.purpose` igual a `post_deploy_gate` e `service.version`
    igual ao commit implantado;
 2. nenhuma linha com o assunto do e-mail de teste
-   (`post-deploy-gate-<id da execução do workflow>`).
+   (`post-deploy-gate-<id da execução do workflow>-<número da tentativa>`).
 
 Se a linha está no grupo de log `/aws/lambda/lbd-oficina-mecanica-notification`
 do CloudWatch mas não no Datadog, a falha é **da coleta**, não da função.

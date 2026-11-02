@@ -26,6 +26,9 @@ export class SmtpEmailSender implements IEmailSender {
       connectionTimeout: SMTP_TIMEOUT_MS,
       greetingTimeout: SMTP_TIMEOUT_MS,
       socketTimeout: SMTP_TIMEOUT_MS,
+      // Content comes from another service: an object in html or text must never become a file or URL read
+      disableFileAccess: true,
+      disableUrlAccess: true,
     });
 
     return new SmtpEmailSender(transporter, environment.MAIL_FROM);

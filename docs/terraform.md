@@ -76,7 +76,7 @@ planejado.
 | Runtime | `nodejs24.x` | Mesma versão do Node.js usada no projeto e no build |
 | Ponto de entrada | `handler.handler` | A função `handler` do arquivo `handler.js`, na raiz do pacote |
 | Memória | 256 MB | Um envio SMTP por execução, sem processamento pesado |
-| Tempo limite | **5 s** | Um envio cabe com folga: o SMTP tem até 2 s por etapa. O *visibility timeout* da fila (30 s) fica seis vezes acima, como a AWS recomenda |
+| Tempo limite | **5 s** | Um envio cabe com folga no caso normal: cada etapa do SMTP pode ficar até 2 s sem resposta. Um servidor lento em todas as etapas pode estourar os 5 s, e a execução falha sem a linha `notification.failed` (ver a [ADR 0002](adr/0002-uma-mensagem-por-invocacao.md)). O *visibility timeout* da fila (30 s) fica seis vezes acima, como a AWS recomenda |
 | Formato de log | texto | No formato JSON da AWS Lambda, cada linha da função seria embrulhada num JSON da AWS, e o formato da linha mudaria |
 | Retenção do log | 14 dias | Igual à da customer-auth |
 | Publicação de versão | ligada | Cada mudança publica uma versão numerada da função, para rastrear o que está em produção; o event source mapping executa sempre a mais recente |

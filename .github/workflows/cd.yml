@@ -165,7 +165,7 @@ jobs:
           envelope="$(jq -nc \
             --arg messageId "$(cat /proc/sys/kernel/random/uuid)" \
             --arg occurredAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg subject "post-deploy-gate-${GITHUB_RUN_ID}" \
+            --arg subject "post-deploy-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             '{
               messageId: $messageId,
               type: "notification.email.send",
@@ -239,7 +239,7 @@ jobs:
           aws eks update-kubeconfig --name "${EKS_CLUSTER_NAME}" --region "${AWS_REGION}"
           kubectl port-forward -n platform svc/mailhog 8025:8025 > /tmp/port-forward.log 2>&1 &
 
-          url="http://127.0.0.1:8025/api/v2/search?kind=containing&query=post-deploy-gate-${GITHUB_RUN_ID}"
+          url="http://127.0.0.1:8025/api/v2/search?kind=containing&query=post-deploy-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           for _ in $(seq 1 15); do
             if curl -sSf "${url}" -o /tmp/mailhog-search.json 2>/dev/null \
               && jq -e '.total >= 1' /tmp/mailhog-search.json > /dev/null; then
@@ -250,5 +250,5 @@ jobs:
           done
 
           echo "Saída do port-forward:"; cat /tmp/port-forward.log
-          echo "::error::O e-mail post-deploy-gate-${GITHUB_RUN_ID} não chegou ao MailHog do namespace platform. Confira o MailHog e o listener SMTP do NLB"
+          echo "::error::O e-mail post-deploy-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT} não chegou ao MailHog do namespace platform. Confira o MailHog e o listener SMTP do NLB"
           exit 1

@@ -47,6 +47,7 @@ describe('PinoLoggerAdapter — envelope', () => {
 
   it('should bind the given attributes to every line it emits', () => {
     const capture = captureLog();
+
     const logger = capture.adapter.withAttributes({
       'faas.coldstart': true,
       'messaging.message.id': 'msg-1',
@@ -165,6 +166,7 @@ describe('PinoLoggerAdapter — catalog and dictionary', () => {
     expect(() =>
       capture.adapter.event(BUSINESS_EVENTS.NOTIFICATION_FAILED, hostile as never),
     ).not.toThrow();
+
     expect(String(stderr.mock.calls[0][0])).toContain('"oficina.logging.failure.stage":"emit"');
 
     stderr.mockRestore();
