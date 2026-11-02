@@ -1,0 +1,20 @@
+# Every value below has a versioned default in `variables.tf`. This file exists
+# for a local run that needs to diverge; the pipeline does not use it.
+
+# aws_region  = "us-east-1"
+# environment = "prod-simulated"
+
+# function_name = "lbd-oficina-mecanica-notification"
+
+# Pre-existing execution role, read by a data source.
+# lambda_execution_role_name = "LabRole"
+
+# Sender of every email.
+# mail_from = "Oficina Mecânica <noreply@oficina.local>"
+
+# Injected by the delivery pipeline on each apply.
+# service_version = "dev"
+
+# Collection layer. The credential comes from the production environment vault.
+# enable_telemetry_collection = false
+# telemetry_api_key           = ""
