@@ -1,0 +1,49 @@
+{
+  "name": "oficina-mecanica-lambda-notification",
+  "version": "0.0.1",
+  "description": "Função serverless de envio de e-mails",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "invoke": "tsx --env-file-if-exists=.env scripts/invoke.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./jest.e2e.config.ts --runInBand"
+  },
+  "dependencies": {
+    "nodemailer": "^10.3.1",
+    "pino": "^10.3.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-sns": "^3.1161.0",
+    "@aws-sdk/client-sqs": "^3.1161.0",
+    "@eslint/js": "^10.0.1",
+    "@testcontainers/localstack": "^12.2.1",
+    "@types/aws-lambda": "^8.10.158",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^17.0.0",
+    "jest": "^30.5.2",
+    "prettier": "^3.4.2",
+    "testcontainers": "^12.2.1",
+    "ts-jest": "^29.4.15",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "~6.0",
+    "typescript-eslint": "^8.72.1"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "Records": [
+    {
+      "messageId": "0b6a7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+      "receiptHandle": "evento-de-exemplo",
+      "body": "{\"messageId\":\"6f1d2c3b-4a5e-4f60-8b7c-9d0e1f2a3b4c\",\"type\":\"notification.email.send\",\"occurredAt\":\"2026-11-01T12:00:00.000Z\",\"workOrderId\":\"3f0b6a6e-2a8b-4c7e-9b7a-1d2e3f4a5b6c\",\"payload\":{\"to\":[\"cliente@oficina.local\"],\"subject\":\"Seu orçamento está disponível\",\"text\":\"Olá. O orçamento da sua ordem de serviço está disponível para aprovação.\",\"html\":\"<p>Olá. O orçamento da sua ordem de serviço está disponível para aprovação.</p>\",\"purpose\":\"quote_sent\"}}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1793534400000",
+        "SenderId": "AIDAEXAMPLE",
+        "ApproximateFirstReceiveTimestamp": "1793534400000",
+        "SequenceNumber": "18849496460467696128",
+        "MessageGroupId": "3f0b6a6e-2a8b-4c7e-9b7a-1d2e3f4a5b6c",
+        "MessageDeduplicationId": "6f1d2c3b-4a5e-4f60-8b7c-9d0e1f2a3b4c"
+      },
+      "messageAttributes": {
+        "type": {
+          "dataType": "String",
+          "stringValue": "notification.email.send"
+        },
+        "traceparent": {
+          "dataType": "String",
+          "stringValue": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+        }
+      },
+      "md5OfBody": "",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:000000000000:notification.fifo",
+      "awsRegion": "us-east-1"
+    }
+  ]
+}

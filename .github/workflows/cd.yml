@@ -1,0 +1,254 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform action to execute"
+        required: false
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+  TF_VAR_aws_base_state_bucket: ${{ vars.TF_STATE_BUCKET }}
+  TF_VAR_k8s_state_bucket: ${{ vars.TF_STATE_BUCKET }}
+  TF_VAR_messaging_state_bucket: ${{ vars.TF_STATE_BUCKET }}
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  deploy:
+    name: Deploy Lambda
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      function_name: ${{ steps.tf.outputs.function_name }}
+      queue_arn: ${{ steps.tf.outputs.queue_arn }}
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (vars.ENABLE_DEPLOY == 'true' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # Collection is optional, but enabling it without the key attaches a layer that delivers nothing
+      - name: Validate required secrets
+        if: github.event_name != 'workflow_dispatch' || inputs.action != 'destroy'
+        env:
+          DD_API_KEY: ${{ secrets.DD_API_KEY }}
+          ENABLE_TELEMETRY_COLLECTION: ${{ vars.ENABLE_TELEMETRY_COLLECTION }}
+        run: |
+          set -euo pipefail
+
+          if [ "${ENABLE_TELEMETRY_COLLECTION}" = "true" ] && [ -z "${DD_API_KEY}" ]; then
+            echo "::error::DD_API_KEY não está configurado nos segredos da organização, mas ENABLE_TELEMETRY_COLLECTION está ligada."
+            exit 1
+          fi
+
+          echo "Segredos exigidos presentes."
+
+      - uses: ./.github/actions/setup-ci
+
+      - name: Build
+        working-directory: app
+        run: npm run build
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@254c19bd240aabef8777f48595e9d2d7b972184b # v6.2.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init -no-color -backend-config="bucket=$TF_STATE_BUCKET"
+        working-directory: infra
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
+        working-directory: infra
+
+      - name: Terraform Plan
+        if: github.event_name != 'workflow_dispatch' || inputs.action != 'destroy'
+        working-directory: infra
+        env:
+          TF_VAR_service_version: ${{ github.sha }}
+          TF_VAR_enable_telemetry_collection: ${{ vars.ENABLE_TELEMETRY_COLLECTION == 'true' }}
+          TF_VAR_telemetry_api_key: ${{ secrets.DD_API_KEY }}
+        run: terraform plan -no-color
+
+      - name: Terraform Apply
+        if: github.event_name != 'workflow_dispatch' || inputs.action != 'destroy'
+        working-directory: infra
+        env:
+          TF_VAR_service_version: ${{ github.sha }}
+          TF_VAR_enable_telemetry_collection: ${{ vars.ENABLE_TELEMETRY_COLLECTION == 'true' }}
+          TF_VAR_telemetry_api_key: ${{ secrets.DD_API_KEY }}
+        run: terraform apply -auto-approve -no-color
+
+      - name: Terraform Destroy
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'destroy'
+        working-directory: infra
+        env:
+          TF_VAR_service_version: ${{ github.sha }}
+          TF_VAR_enable_telemetry_collection: ${{ vars.ENABLE_TELEMETRY_COLLECTION == 'true' }}
+          TF_VAR_telemetry_api_key: ${{ secrets.DD_API_KEY }}
+        run: terraform destroy -auto-approve -no-color
+
+      - name: Read stack outputs
+        id: tf
+        if: github.event_name != 'workflow_dispatch' || inputs.action != 'destroy'
+        working-directory: infra
+        run: |
+          set -euo pipefail
+          {
+            echo "function_name=$(terraform output -raw function_name)"
+            echo "function_version=$(terraform output -raw function_version)"
+            echo "queue_arn=$(terraform output -raw queue_arn)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Record the deployment in the job summary
+        if: always() && (github.event_name != 'workflow_dispatch' || inputs.action != 'destroy')
+        run: |
+          {
+            echo '### Entrega'
+            echo ''
+            echo "- Função: \`${{ steps.tf.outputs.function_name }}\`"
+            echo "- Versão publicada: \`${{ steps.tf.outputs.function_version }}\`"
+            echo "- Fila consumida: \`${{ steps.tf.outputs.queue_arn }}\`"
+            echo "- Commit implantado: \`${{ github.sha }}\`"
+            echo "- Coleta de telemetria: \`${{ vars.ENABLE_TELEMETRY_COLLECTION == 'true' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  post-deploy-gates:
+    name: Post-Deploy Gates
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.event_name != 'workflow_dispatch' || inputs.action != 'destroy'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@254c19bd240aabef8777f48595e9d2d7b972184b # v6.2.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # A direct invocation with an SQS-shaped event proves the package loads, the configuration
+      # is valid and the function reaches the SMTP listener; nothing goes through the queue
+      - name: Post-deploy gate — real invocation
+        env:
+          FUNCTION_NAME: ${{ needs.deploy.outputs.function_name }}
+          QUEUE_ARN: ${{ needs.deploy.outputs.queue_arn }}
+        run: |
+          set -euo pipefail
+
+          envelope="$(jq -nc \
+            --arg messageId "$(cat /proc/sys/kernel/random/uuid)" \
+            --arg occurredAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg subject "post-deploy-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            '{
+              messageId: $messageId,
+              type: "notification.email.send",
+              occurredAt: $occurredAt,
+              workOrderId: null,
+              payload: {
+                to: ["post-deploy-gate@oficina.local"],
+                subject: $subject,
+                text: "Verificação pós-entrega",
+                html: "<p>Verificação pós-entrega</p>",
+                purpose: "post_deploy_gate"
+              }
+            }')"
+
+          jq -n \
+            --arg body "${envelope}" \
+            --arg queueArn "${QUEUE_ARN}" \
+            --arg region "${AWS_REGION}" \
+            --arg recordId "$(cat /proc/sys/kernel/random/uuid)" \
+            '{
+              Records: [{
+                messageId: $recordId,
+                receiptHandle: "post-deploy-gate",
+                body: $body,
+                attributes: {
+                  ApproximateReceiveCount: "1",
+                  SentTimestamp: "0",
+                  SenderId: "post-deploy-gate",
+                  ApproximateFirstReceiveTimestamp: "0",
+                  MessageGroupId: "post-deploy-gate"
+                },
+                messageAttributes: {
+                  type: { dataType: "String", stringValue: "notification.email.send" }
+                },
+                md5OfBody: "",
+                eventSource: "aws:sqs",
+                eventSourceARN: $queueArn,
+                awsRegion: $region
+              }]
+            }' > /tmp/gate-event.json
+
+          aws lambda invoke \
+            --function-name "${FUNCTION_NAME}" \
+            --cli-binary-format raw-in-base64-out \
+            --payload "file:///tmp/gate-event.json" \
+            --output json \
+            /tmp/gate-response.json > /tmp/gate-metadata.json
+
+          echo "Metadados da invocação:"; cat /tmp/gate-metadata.json
+          echo "Resposta:"; cat /tmp/gate-response.json
+
+          if jq -e '.FunctionError' /tmp/gate-metadata.json > /dev/null 2>&1; then
+            echo "::error::A invocação falhou sem resposta da aplicação: pacote ou configuração quebrados. A causa está no log group /aws/lambda/${FUNCTION_NAME}"
+            exit 1
+          fi
+
+          if ! jq -e '.batchItemFailures | length == 0' /tmp/gate-response.json > /dev/null; then
+            echo "::error::A função devolveu a mensagem como falha: o envio SMTP não foi aceito. O motivo está na linha notification.failed do log group /aws/lambda/${FUNCTION_NAME}"
+            exit 1
+          fi
+
+          echo "Portão 1 aprovado: a função enviou o e-mail."
+
+      # Final gate: the e-mail must reach the MailHog behind the NLB, not only leave the function
+      - name: Post-deploy gate — delivered e-mail
+        env:
+          EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+        run: |
+          set -euo pipefail
+
+          aws eks update-kubeconfig --name "${EKS_CLUSTER_NAME}" --region "${AWS_REGION}"
+          kubectl port-forward -n platform svc/mailhog 8025:8025 > /tmp/port-forward.log 2>&1 &
+
+          url="http://127.0.0.1:8025/api/v2/search?kind=containing&query=post-deploy-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          for _ in $(seq 1 15); do
+            if curl -sSf "${url}" -o /tmp/mailhog-search.json 2>/dev/null \
+              && jq -e '.total >= 1' /tmp/mailhog-search.json > /dev/null; then
+              echo "Portão 2 aprovado: o MailHog recebeu o e-mail."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Saída do port-forward:"; cat /tmp/port-forward.log
+          echo "::error::O e-mail post-deploy-gate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT} não chegou ao MailHog do namespace platform. Confira o MailHog e o listener SMTP do NLB"
+          exit 1
