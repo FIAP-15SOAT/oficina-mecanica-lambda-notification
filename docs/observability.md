@@ -83,16 +83,17 @@ ele falta.
 | `messaging.message.id` | A mensagem gravada pelo serviço ao publicar e, se for o caso, a mensagem na DLQ |
 | `faas.invocation_id` | O registro da execução na AWS Lambda |
 
-## Pendente: spans pela extensão
+## Spans pela extensão
 
 Para continuar o trace, a função precisaria enviar spans. A Datadog Extension
-pode aceitar spans no protocolo do OpenTelemetry (OTLP), mas isso ainda não foi
-testado nesta conta. Por isso `DD_TRACE_ENABLED` é `false` e a função não tem
-biblioteca de tracing.
+aceita spans no protocolo do OpenTelemetry (OTLP) quando a variável
+`DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT` vale `localhost:4318`, e os
+envia ao APM do Datadog, a área que mostra os traces.
 
-**Quando reabrir:** se a extensão aceitar spans OTLP, a função passa a criar um
-span ligado ao trace recebido no `traceparent`, e a ligação deixa de depender só
-do log.
+A função não usa esse recurso: `DD_TRACE_ENABLED` é `false`, a variável de OTLP
+não é definida e a função não tem biblioteca de tracing. Continuar o trace exige
+acrescentar uma biblioteca do OpenTelemetry que crie um span ligado ao trace
+recebido no `traceparent`; até lá, a ligação é só pelo `trace_id` no log.
 
 ## Como conferir a coleta
 
