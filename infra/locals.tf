@@ -31,6 +31,9 @@ locals {
 
     DD_SERVERLESS_LOGS_ENABLED = "true"
     DD_TRACE_ENABLED           = "false"
+
+    DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT = "localhost:4318"
+    OTEL_EXPORTER_OTLP_ENDPOINT                     = "http://localhost:4318"
   } : {}
 
   telemetry_layer_arn = "arn:aws:lambda:${data.aws_region.current.region}:${var.telemetry_extension_layer_account_id}:layer:${var.telemetry_extension_layer_name}:${var.telemetry_extension_layer_version}"

@@ -61,13 +61,15 @@ mesma extensão, só para os logs.
 | --- | --- |
 | Liga e desliga | Variable `ENABLE_TELEMETRY_COLLECTION` do repositório no GitHub; o CD a passa ao Terraform como `TF_VAR_enable_telemetry_collection` |
 | Chave do Datadog | Segredo `DD_API_KEY` da organização no GitHub |
-| Layer | `Datadog-Extension`, versão 99, publicada pela conta `464622532012`; valores padrão de variáveis do Terraform |
+| Layer | `Datadog-Extension`, versão 102, publicada pela conta `464622532012`; valores padrão de variáveis do Terraform |
 | `DD_SITE` | `us5.datadoghq.com`, a região da conta Datadog da solução |
 | `DD_SERVICE` | `oficina-mecanica-lambda-notification`, o nome do serviço no Datadog |
-| `DD_ENV` | `production`, o mesmo ambiente dos serviços, para as consultas por ambiente incluírem esta função |
-| `DD_VERSION` | O commit implantado |
+| `DD_ENV` | `production`, o mesmo ambiente dos serviços, para as consultas por ambiente incluírem esta função; a extensão também tira dela o `env` dos spans |
+| `DD_VERSION` | O commit implantado; a extensão também tira dela o `version` dos spans |
 | `DD_SERVERLESS_LOGS_ENABLED` | `true`: a extensão envia os logs da função |
-| `DD_TRACE_ENABLED` | `false`: a função não produz trace |
+| `DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT` | `localhost:4318`: liga o receptor OTLP/HTTP da extensão, que recebe os spans da função |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318`: o endereço para onde a função envia os spans; sem ela, a função não envia span |
+| `DD_TRACE_ENABLED` | `false`: a extensão não lê esta variável; só a biblioteca do Datadog que cria spans no código (`dd-trace`) a leria, e o `false` evita trace duplicado se alguém acrescentar essa biblioteca à função |
 
 Com a coleta desligada, a função é criada **sem** a extensão e funciona
 normalmente; os logs continuam no CloudWatch. Com a coleta ligada e sem a chave,

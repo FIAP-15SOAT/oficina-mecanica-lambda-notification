@@ -76,7 +76,7 @@ planejado.
 | Runtime | `nodejs24.x` | Mesma versão do Node.js usada no projeto e no build |
 | Ponto de entrada | `handler.handler` | A função `handler` do arquivo `handler.js`, na raiz do pacote |
 | Memória | 256 MB | Um envio SMTP por execução, sem processamento pesado |
-| Tempo limite | **5 s** | Um envio cabe com folga no caso normal: cada etapa do SMTP pode ficar até 2 s sem resposta. Um servidor lento em todas as etapas pode estourar os 5 s, e a execução falha sem a linha `notification.failed` (ver a [ADR 0002](adr/0002-uma-mensagem-por-invocacao.md)). O *visibility timeout* da fila (30 s) fica seis vezes acima, como a AWS recomenda |
+| Tempo limite | **5 s** | Um envio cabe com folga no caso normal: cada etapa do SMTP pode ficar até 2 s sem resposta, e a espera do envio dos spans à extensão do Datadog, depois do envio do e-mail, soma no máximo 500 ms. Um servidor lento em todas as etapas, somado a essa espera, pode estourar os 5 s, e a execução falha sem a linha `notification.failed` (ver a [ADR 0002](adr/0002-uma-mensagem-por-invocacao.md)). O *visibility timeout* da fila (30 s) fica seis vezes acima, como a AWS recomenda |
 | Formato de log | texto | No formato JSON da AWS Lambda, cada linha da função seria embrulhada num JSON da AWS, e o formato da linha mudaria |
 | Retenção do log | 14 dias | Igual à da customer-auth |
 | Publicação de versão | ligada | Cada mudança publica uma versão numerada da função, para rastrear o que está em produção; o event source mapping executa sempre a mais recente |
@@ -121,7 +121,7 @@ execução local.
 | `telemetry_site` | `string` | `us5.datadoghq.com` | `DD_SITE` |
 | `telemetry_extension_layer_account_id` | `string` | `464622532012` | Conta AWS que publica a layer do Datadog |
 | `telemetry_extension_layer_name` | `string` | `Datadog-Extension` | Nome da layer |
-| `telemetry_extension_layer_version` | `number` | `99` | Versão da layer |
+| `telemetry_extension_layer_version` | `number` | `102` | Versão da layer |
 
 ## Variáveis de ambiente da função
 
@@ -133,7 +133,7 @@ execução local.
 | `MAIL_FROM` | variável `mail_from` |
 | `NODE_OPTIONS` | fixa: `--enable-source-maps`, para a pilha de uma exceção apontar o arquivo `.ts` original |
 | `SERVICE_VERSION` | variável `service_version`; o commit, quando aplicada pelo CD |
-| `DD_API_KEY`, `DD_SITE`, `DD_ENV`, `DD_SERVICE`, `DD_VERSION`, `DD_SERVERLESS_LOGS_ENABLED`, `DD_TRACE_ENABLED` | só com a coleta ligada — ver [Observabilidade](observability.md) |
+| `DD_API_KEY`, `DD_SITE`, `DD_ENV`, `DD_SERVICE`, `DD_VERSION`, `DD_SERVERLESS_LOGS_ENABLED`, `DD_TRACE_ENABLED`, `DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT`, `OTEL_EXPORTER_OTLP_ENDPOINT` | só com a coleta ligada — ver [Observabilidade](observability.md) |
 
 Não há credencial de banco, de SMTP nem de fila: a função não usa nenhuma.
 

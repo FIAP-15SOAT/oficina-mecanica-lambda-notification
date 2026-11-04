@@ -161,5 +161,5 @@ variable "telemetry_extension_layer_name" {
 variable "telemetry_extension_layer_version" {
   description = "Version of the telemetry collection layer"
   type        = number
-  default     = 99
+  default     = 102
 }
