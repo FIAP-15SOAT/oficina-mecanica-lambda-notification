@@ -37,7 +37,7 @@ Hoje o destino dos e-mails é o **MailHog**, um servidor SMTP de teste que roda 
 cluster Kubernetes da solução: ele aceita os e-mails e os mostra numa caixa de
 entrada web, sem entregá-los a endereços reais.
 
-![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch e, com a layer opcional do Datadog, no Datadog](docs/diagrams/infrastructure.png)
+![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch e, com a layer opcional do Datadog na versão 102, logs e spans no Datadog, com os spans enviados pela função à extensão por OTLP em localhost:4318](docs/diagrams/infrastructure.png)
 
 ## 🎯 Responsabilidade
 

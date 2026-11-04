@@ -241,7 +241,7 @@ O Jest não lê o `tsconfig.json`, então declara o mesmo mapa em
 
 ## Como a função roda na AWS
 
-![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch com retenção de 14 dias](diagrams/infrastructure.png)
+![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch com retenção de 14 dias e, com a layer opcional do Datadog na versão 102, logs e spans no Datadog, com os spans enviados pela função à extensão por OTLP em localhost:4318](diagrams/infrastructure.png)
 
 **Quem chama a função.** Um *event source mapping* — a configuração da AWS
 Lambda que lê uma fila SQS e executa a função com as mensagens — liga
