@@ -198,19 +198,32 @@ dados pessoais (CPF, CNPJ, e-mail, telefone) são **mascarados** mantendo o
 formato (`maria@example.com` vira `m***@example.com`). É a segunda proteção; a primeira é o conteúdo
 do e-mail nunca ser passado ao logger.
 
-## Falha do próprio logger
+## Falhas do log e da telemetria no stderr
 
-Se o próprio mecanismo de log falhar, a execução continua e a resposta não muda.
-O aviso da falha vai para a saída de erro (stderr), e não para o stdout que
-acabou de falhar, e diz só a **etapa** e o **nome do campo** — nunca o valor que
-causou a falha, para não vazar o dado por esse caminho.
+Duas falhas da própria observabilidade nunca mudam a execução nem a resposta da
+função. Cada uma escreve uma linha JSON na saída de erro do processo (stderr),
+separada do stdout, onde saem os eventos de log: o aviso não passa pelo caminho
+que acabou de falhar. As duas linhas levam o mesmo `timestamp`, o mesmo `level`
+e os mesmos campos de serviço das linhas de log.
+
+| `message` | `level` | Quando | Campos próprios |
+| --- | --- | --- | --- |
+| `logging failure` | `error` | O próprio mecanismo de log falhou | `oficina.logging.failure.stage`: `serialization` (converter o valor de um campo), `emit` (montar a linha no `pino`, a biblioteca de log, ou campo não declarado) ou `destination` (escrever no stdout); `oficina.logging.failure.field`, o nome do campo, quando a falha é de um campo; `oficina.logging.failure.error_type`, o tipo do erro; `oficina.logging.failure.policy` = `continue-degraded` na falha do stdout, avisada uma vez só |
+| `telemetry failure` | `warn` | O envio de spans falhou. O span é o registro do processamento de uma mensagem dentro do trace, o caminho de um pedido entre os serviços ([Observabilidade](observability.md)) | `oficina.telemetry.failure.stage`: `startup` (a montagem do envio de spans falhou, e a função segue sem spans) ou `export` (a extensão do Datadog recusou os spans, devolveu erro ou não respondeu em 500 ms, e os spans daquela execução se perdem); `oficina.telemetry.failure.error_type`, o tipo do erro (`Error`, `TypeError`, ou o tipo do valor lançado quando não é um erro) |
+
+O que nunca entra nessas linhas: o valor do campo que causou a falha, a mensagem
+do erro (que pode repetir o endereço do receptor ou dados da mensagem) e
+qualquer conteúdo do e-mail. Elas não podem virar o caminho de vazamento que a
+ocultação de dados existe para impedir.
 
 ## Origem do código copiado
 
 O código de logging — lista de campos, ocultação de dados, conversão de exceções,
 filtro de campos e aviso de falha — é **cópia adaptada** do da customer-auth
 (`oficina-mecanica-lambda-customer-auth`, `app/src/infrastructure/logging/`), que
-por sua vez o copiou do Work Order. Ficou de fora o que só serve a uma função
+por sua vez o copiou do Work Order. O canal de diagnóstico no stderr segue o do
+Work Order: a mesma função escreve as duas linhas de falha, com mensagem,
+atributos e nível próprios. Ficou de fora o que só serve a uma função
 chamada por HTTP: id de correlação lido de cabeçalho, linha por requisição e
 medição de durações.
 

@@ -11,6 +11,8 @@ export type LoggingFailureStage = 'serialization' | 'emit' | 'destination';
 
 export const DESTINATION_FAILURE_POLICY = 'continue-degraded';
 
+const LOGGING_FAILURE_MESSAGE = 'logging failure';
+
 export interface LoggingFailureDetail {
   field?: string;
   errorType?: string;
@@ -31,7 +33,7 @@ export function reportLoggingFailure(
   stage: LoggingFailureStage,
   detail: LoggingFailureDetail = {},
 ): void {
-  writeDiagnostic({
+  writeDiagnostic(LOGGING_FAILURE_MESSAGE, {
     'oficina.logging.failure.stage': stage,
     ...(detail.field ? { 'oficina.logging.failure.field': detail.field } : {}),
     ...(detail.errorType ? { 'oficina.logging.failure.error_type': detail.errorType } : {}),
@@ -45,19 +47,28 @@ export function reportDestinationFailure(): void {
 
   destinationFailureReported = true;
 
-  writeDiagnostic({
+  writeDiagnostic(LOGGING_FAILURE_MESSAGE, {
     'oficina.logging.failure.stage': 'destination',
     'oficina.logging.failure.policy': DESTINATION_FAILURE_POLICY,
   });
 }
 
-function writeDiagnostic(attributes: Record<string, string>): void {
+/**
+ * Exported because the telemetry diagnostic must go out through the same fd 2,
+ * with the same envelope and the same resource attributes: a second writer
+ * would have its own escaping policy and its own way of failing.
+ */
+export function writeDiagnostic(
+  message: string,
+  attributes: Record<string, string>,
+  level: 'warn' | 'error' = 'error',
+): void {
   try {
     process.stderr.write(
       `${JSON.stringify({
         timestamp: new Date().toISOString(),
-        level: 'error',
-        message: 'logging failure',
+        level,
+        message,
         ...resolveLoggerConfig().resource,
         ...attributes,
       })}\n`,
@@ -75,6 +86,6 @@ export function runSafelyVoid(stage: LoggingFailureStage, operation: () => void)
   }
 }
 
-function resolveErrorTypeName(error: unknown): string {
+export function resolveErrorTypeName(error: unknown): string {
   return error instanceof Error ? error.name : typeof error;
 }
