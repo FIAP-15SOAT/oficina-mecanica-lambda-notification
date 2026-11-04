@@ -76,7 +76,7 @@ Nas tabelas, **cardinalidade** é quantos valores diferentes o campo costuma ter
 
 | Campo | Tipo | Cardinalidade | Componente | O que é |
 | --- | --- | --- | --- | --- |
-| `trace_id` | string | alta | `trace-context` | Id do trace do pedido que originou o e-mail; só quando a mensagem o traz |
+| `trace_id` | string | alta | `handler` (propagador W3C) | Id do trace do pedido que originou o e-mail; só quando a mensagem o traz |
 | `messaging.message.id` | string | alta | `handler` | Id da mensagem (ver abaixo) |
 | `messaging.destination.name` | string | baixa | `handler` | Fila de origem: `notification.fifo` |
 | `oficina.work_order.id` | string | alta | `handler` | Id da ordem de serviço; só quando a mensagem tem OS |
@@ -182,11 +182,22 @@ SMTP que repete o destinatário e confere que o domínio dele não aparece.
 ## Sem `trace_id` inventado
 
 O `trace_id` vem do atributo `traceparent` (padrão W3C Trace Context) que o
-serviço anexa ao publicar o pedido. Sem o atributo, ou com um valor inválido
-(versão `ff`, id de trace só com zeros, formato errado), a linha sai **sem** o
+serviço anexa ao publicar o pedido. O ponto de entrada lê o atributo uma vez por
+mensagem com o propagador W3C do OpenTelemetry — o componente que converte o
+`traceparent` em contexto de trace e recusa o que foge do padrão — e usa o mesmo
+resultado no log e como pai do span da mensagem, que assim nunca apontam para
+traces diferentes.
+
+Sem o atributo, ou com um valor inválido (versão `ff`, id do trace ou do span
+pai só com zeros, letras maiúsculas, formato errado), a linha sai **sem** o
 campo. Um id inventado faria o Datadog procurar um trace que não existe, o que é
-pior que não ter o campo. Não há `span_id`: a função não cria spans (os trechos
-de um trace) — ver [Observabilidade](observability.md).
+pior que não ter o campo. Um `traceparent` válido mas **não amostrado** — o
+serviço de origem decidiu não registrar aquele trace — mantém o `trace_id` no
+log, mas não gera span.
+
+Não há `span_id` no log: o span da mensagem e a linha de log se ligam pelo
+`trace_id` e pelo `messaging.message.id` — ver
+[Observabilidade › O span de cada mensagem](observability.md#o-span-de-cada-mensagem).
 
 ## Ocultação de dados
 
@@ -209,7 +220,7 @@ e os mesmos campos de serviço das linhas de log.
 | `message` | `level` | Quando | Campos próprios |
 | --- | --- | --- | --- |
 | `logging failure` | `error` | O próprio mecanismo de log falhou | `oficina.logging.failure.stage`: `serialization` (converter o valor de um campo), `emit` (montar a linha no `pino`, a biblioteca de log, ou campo não declarado) ou `destination` (escrever no stdout); `oficina.logging.failure.field`, o nome do campo, quando a falha é de um campo; `oficina.logging.failure.error_type`, o tipo do erro; `oficina.logging.failure.policy` = `continue-degraded` na falha do stdout, avisada uma vez só |
-| `telemetry failure` | `warn` | O envio de spans falhou. O span é o registro do processamento de uma mensagem dentro do trace, o caminho de um pedido entre os serviços ([Observabilidade](observability.md)) | `oficina.telemetry.failure.stage`: `startup` (a montagem do envio de spans falhou, e a função segue sem spans) ou `export` (a extensão do Datadog recusou os spans, devolveu erro ou não respondeu em 500 ms, e os spans daquela execução se perdem); `oficina.telemetry.failure.error_type`, o tipo do erro (`Error`, `TypeError`, ou o tipo do valor lançado quando não é um erro) |
+| `telemetry failure` | `warn` | O envio de spans falhou. O span é o registro do processamento de uma mensagem dentro do trace, o caminho de um pedido entre os serviços ([Observabilidade](observability.md#o-span-de-cada-mensagem)) | `oficina.telemetry.failure.stage`: `startup` (a montagem do envio de spans falhou, e a função segue sem spans) ou `export` (a extensão do Datadog recusou os spans, devolveu erro ou não respondeu em 500 ms, e os spans daquela execução se perdem); `oficina.telemetry.failure.error_type`, o tipo do erro (`Error`, `TypeError`, ou o tipo do valor lançado quando não é um erro) |
 
 O que nunca entra nessas linhas: o valor do campo que causou a falha, a mensagem
 do erro (que pode repetir o endereço do receptor ou dados da mensagem) e

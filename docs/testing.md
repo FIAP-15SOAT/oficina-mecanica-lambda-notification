@@ -7,11 +7,14 @@ verificação que só existe depois do deploy.
 
 Sem contêiner e sem rede. Testa o domínio (`EmailMessage`), o caso de uso, o
 controller, a leitura da mensagem da fila, o envio SMTP (com um transporte falso
-no lugar do servidor), o ponto de entrada e o código de logging. As
-implementações falsas das interfaces ficam em
+no lugar do servidor), o ponto de entrada, o código de logging e o envio de
+spans (o registro do processamento de cada mensagem dentro do trace do pedido —
+ver [Observabilidade](observability.md#o-span-de-cada-mensagem)). As implementações falsas das interfaces ficam em
 `test/helpers/notification-mock.factory.ts`, e os eventos de fila de exemplo em
 `test/helpers/sqs-event.factory.ts`. O log é capturado já formatado, do logger
-real (`test/helpers/log-capture.ts`), e não de um logger falso.
+real (`test/helpers/log-capture.ts`), e não de um logger falso. Os spans são
+lidos de um exportador em memória do OpenTelemetry (`InMemorySpanExporter`), que
+guarda os spans em vez de enviá-los à extensão do Datadog.
 
 É este nível que cobre 100% do código nas quatro métricas de cobertura do Jest:
 linhas, instruções (*statements*), funções e ramos (*branches*, cada caminho de
@@ -71,7 +74,13 @@ bem-intencionada não desfaça uma decisão sem que algum teste falhe.
 | Assunto, texto, HTML e destinatário de um e-mail enviado não aparecem em nenhuma linha de log | `handler.spec.ts` |
 | Toda chave escrita no log está na lista de campos permitidos | `handler.spec.ts` |
 | E-mail sem OS (`workOrderId` nulo ou ausente) e payload com campo a mais são aceitos | `notification-message.parser.spec.ts` |
-| `traceparent` ausente, malformado ou com id só de zeros: o e-mail sai e o log fica sem `trace_id` | `trace-context.spec.ts` e `handler.spec.ts` |
+| `traceparent` ausente, com id do trace ou do span pai só de zeros, em maiúsculas, de versão `ff` ou não amostrado: o e-mail sai e nenhum span é registrado; só o não amostrado deixa `trace_id` no log | `handler.spec.ts` |
+| Cada entrega de uma mensagem com `traceparent` válido e amostrado gera um span `process notification.fifo` do tipo `CONSUMER`, filho do span indicado e com os mesmos valores do evento de log | `handler.spec.ts` |
+| Uma recusa do servidor SMTP que repete o destinatário não deixa endereço, assunto, texto, HTML nem texto do erro em nenhum atributo, evento ou status do span | `handler.spec.ts` |
+| Mensagem que nem é JSON gera span com o id da SQS, propósito `unspecified` e `error.type` `invalid_message` | `handler.spec.ts` |
+| A extensão recusa os spans ou passa de 500 ms: a resposta não muda, sai uma linha `telemetry failure` com o estágio `export`, sem a mensagem do erro, e nada no stdout | `tracing.spec.ts` e `handler.spec.ts` |
+| O envio de spans que não consegue ser montado não derruba a função: ela segue sem spans e escreve `telemetry failure` com o estágio `startup` | `tracing.spec.ts` |
+| Sem `OTEL_EXPORTER_OTLP_ENDPOINT`, nenhum envio de spans é tentado e o log mantém o `trace_id` | `tracing.spec.ts` e `handler.spec.ts` |
 | Propósito com conteúdo ou fora do formato (`Senha inicial: ...`, endereço, dígitos, maiúsculas, 41 caracteres, número) vira `unspecified` e não impede o envio | `notification-message.parser.spec.ts` e `handler.spec.ts` |
 | O propósito é lido mesmo quando o resto do payload é inválido | `notification-message.parser.spec.ts` e `handler.spec.ts` |
 | Quando uma mensagem falha, ela e as seguintes do mesmo grupo voltam sem serem tentadas; as de outro grupo são enviadas | `handler.spec.ts` |
