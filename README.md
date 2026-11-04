@@ -84,6 +84,7 @@ entrada web, sem entregá-los a endereços reais.
 | SMTP | `nodemailer` | Biblioteca de envio de e-mail que o Work Order já usa; envia sem TLS ao MailHog e tem limites de tempo de conexão |
 | Validação | `zod` | Confere a mensagem contra o tipo de `notification.email.send` definido no catálogo de mensagens do Work Order |
 | Log | `pino` | Uma linha JSON por registro na saída padrão (stdout), no mesmo formato dos serviços |
+| Telemetria | OpenTelemetry | Cria o span de cada mensagem (o trecho do trace, o registro do caminho de um pedido entre os serviços, que cobre o processamento dela) e o envia por OTLP, o protocolo do OpenTelemetry, à Datadog Extension, a extensão do Datadog anexada à função; o mesmo padrão aberto dos serviços, sem código do Datadog |
 | Build | `esbuild` | Gera um arquivo JavaScript único com todas as dependências; o `.zip` publicado é montado pelo Terraform — [ADR 0003](docs/adr/0003-camadas-enxutas-e-empacotamento.md) |
 | Testes | Jest · Testcontainers | Testes unitários e de ponta a ponta; o Testcontainers sobe contêineres Docker durante o teste — [Testes](docs/testing.md) |
 

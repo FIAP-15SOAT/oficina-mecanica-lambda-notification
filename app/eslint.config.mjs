@@ -4,7 +4,14 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const INFRASTRUCTURE_LIBRARIES = ['aws-lambda', 'nodemailer', 'nodemailer/*', 'pino', 'pino/*'];
+const INFRASTRUCTURE_LIBRARIES = [
+  'aws-lambda',
+  'nodemailer',
+  'nodemailer/*',
+  'pino',
+  'pino/*',
+  '@opentelemetry/*',
+];
 
 const SERVERLESS_TYPES = ['aws-lambda'];
 
@@ -103,7 +110,7 @@ export default tseslint.config(
             {
               group: [...INFRASTRUCTURE_LIBRARIES, '@infrastructure/*', '@interface-adapters/*'],
               message:
-                'Camada interna (domain/application) deve ser livre de infraestrutura: não importe aws-lambda, nodemailer, pino nem módulos de @infrastructure/@interface-adapters.',
+                'Camada interna (domain/application) deve ser livre de infraestrutura: não importe aws-lambda, nodemailer, pino, OpenTelemetry nem módulos de @infrastructure/@interface-adapters.',
             },
           ],
         },
@@ -120,7 +127,7 @@ export default tseslint.config(
             {
               group: [...INFRASTRUCTURE_LIBRARIES, '@infrastructure/*'],
               message:
-                'interface-adapters/ é o anel de adaptadores livre de framework: não importe aws-lambda, nodemailer, pino nem módulos de @infrastructure.',
+                'interface-adapters/ é o anel de adaptadores livre de framework: não importe aws-lambda, nodemailer, pino, OpenTelemetry nem módulos de @infrastructure.',
             },
           ],
         },

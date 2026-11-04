@@ -43,9 +43,10 @@ As fronteiras entre camadas não dependem só de disciplina: o
 são quebradas.
 
 - `domain/` e `application/` não podem importar `aws-lambda`, `nodemailer`,
-  `pino` nem arquivos de `infrastructure/` ou `interface-adapters/`.
-- `interface-adapters/` não pode importar `aws-lambda`, `nodemailer`, `pino` nem
-  arquivos de `infrastructure/`.
+  `pino`, os pacotes do OpenTelemetry (`@opentelemetry/*`) nem arquivos de
+  `infrastructure/` ou `interface-adapters/`.
+- `interface-adapters/` não pode importar `aws-lambda`, `nodemailer`, `pino`, os
+  pacotes do OpenTelemetry nem arquivos de `infrastructure/`.
 - Os tipos do evento da AWS Lambda (`aws-lambda`) só podem ser importados em
   `src/infrastructure/serverless/` e em `src/handler.ts`, o ponto de entrada.
 
