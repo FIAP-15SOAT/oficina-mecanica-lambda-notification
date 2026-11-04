@@ -139,6 +139,8 @@ describe('email delivery from the topic to MailHog', () => {
       SMTP_HOST: mailhogHost,
       SMTP_PORT: String(mailhog.getMappedPort(1025)),
       MAIL_FROM: 'Oficina Mecanica <noreply@oficina.local>',
+      // No OTLP receiver here: span export stays off even when the shell defines the endpoint
+      OTEL_EXPORTER_OTLP_ENDPOINT: '',
     };
   });
 

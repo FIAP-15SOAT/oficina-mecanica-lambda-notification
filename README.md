@@ -37,7 +37,7 @@ Hoje o destino dos e-mails é o **MailHog**, um servidor SMTP de teste que roda 
 cluster Kubernetes da solução: ele aceita os e-mails e os mostra numa caixa de
 entrada web, sem entregá-los a endereços reais.
 
-![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch e, com a layer opcional do Datadog, no Datadog](docs/diagrams/infrastructure.png)
+![Infraestrutura: o tópico SNS oficina-events.fifo copia a mensagem para a fila SQS notification.fifo, que manda à DLQ notification-dlq.fifo após 5 recebimentos; o event source mapping entrega uma mensagem por execução, com até 10 execuções simultâneas, à função nas subnets privadas, que envia o e-mail pelo NLB interno na porta 1025 ao MailHog no namespace platform; logs no CloudWatch e, com a layer opcional do Datadog na versão 102, logs e spans no Datadog, com os spans enviados pela função à extensão por OTLP em localhost:4318](docs/diagrams/infrastructure.png)
 
 ## 🎯 Responsabilidade
 
@@ -53,6 +53,10 @@ entrada web, sem entregá-los a endereços reais.
   servidor SMTP aceita o e-mail, ou o evento `notification.failed` quando ele
   recusa ou a mensagem é inválida. O registro diz que tipo de e-mail era, de qual
   ordem de serviço e de qual pedido veio — **nunca** o conteúdo do e-mail.
+- Registra o processamento de cada mensagem como um span, uma etapa do trace do
+  pedido que a originou (o registro do caminho desse pedido entre os serviços),
+  com o resultado da tentativa, e o envia ao Datadog. Mensagem sem contexto de
+  trace não gera span. O span também nunca leva o conteúdo do e-mail.
 
 **O que ela não faz**
 
@@ -84,6 +88,7 @@ entrada web, sem entregá-los a endereços reais.
 | SMTP | `nodemailer` | Biblioteca de envio de e-mail que o Work Order já usa; envia sem TLS ao MailHog e tem limites de tempo de conexão |
 | Validação | `zod` | Confere a mensagem contra o tipo de `notification.email.send` definido no catálogo de mensagens do Work Order |
 | Log | `pino` | Uma linha JSON por registro na saída padrão (stdout), no mesmo formato dos serviços |
+| Telemetria | OpenTelemetry | Cria o span de cada mensagem e o envia por OTLP, o protocolo do OpenTelemetry, à Datadog Extension, a extensão do Datadog anexada à função; o mesmo padrão aberto dos serviços, sem código do Datadog — [ADR 0004](docs/adr/0004-span-de-processamento-por-mensagem.md) |
 | Build | `esbuild` | Gera um arquivo JavaScript único com todas as dependências; o `.zip` publicado é montado pelo Terraform — [ADR 0003](docs/adr/0003-camadas-enxutas-e-empacotamento.md) |
 | Testes | Jest · Testcontainers | Testes unitários e de ponta a ponta; o Testcontainers sobe contêineres Docker durante o teste — [Testes](docs/testing.md) |
 
@@ -142,7 +147,7 @@ Todos rodam a partir de `app/`.
 │   │   ├── domain/              # EmailMessage (regras do e-mail), catálogo de mensagens e exceções
 │   │   ├── application/         # Caso de uso, interfaces (portas) e catálogo de eventos de log
 │   │   ├── interface-adapters/  # Controller que traduz o resultado do envio
-│   │   ├── infrastructure/     # Envio SMTP, logging, configuração e leitura da mensagem da fila
+│   │   ├── infrastructure/     # Envio SMTP, logging, envio de spans, configuração e leitura da mensagem da fila
 │   │   ├── bootstrap.ts        # Monta as dependências uma vez e as reaproveita
 │   │   └── handler.ts          # Ponto de entrada chamado pela AWS Lambda
 │   ├── test/                    # Testes unitários e E2E
@@ -162,7 +167,7 @@ Todos rodam a partir de `app/`.
 │   ├── contracts.md            # Formato da mensagem, validação e resposta
 │   ├── local-setup.md          # Desenvolvimento local com MailHog
 │   ├── logging.md              # Formato do log, campos e eventos
-│   ├── observability.md        # Coleta pelo Datadog e correlação com o pedido
+│   ├── observability.md        # Coleta pelo Datadog, correlação com o pedido e o span de cada mensagem
 │   ├── security.md             # Dado sensível e riscos tratados
 │   ├── terraform.md            # Recursos AWS, variáveis, outputs e execução local
 │   └── testing.md              # Testes unitários, de ponta a ponta e cobertura
@@ -179,7 +184,7 @@ Todos rodam a partir de `app/`.
 | 🏛️ [Arquitetura](docs/architecture.md) | Camadas, interfaces, montagem das dependências, fluxo de uma mensagem, pastas e como a função roda na AWS |
 | 🔒 [Segurança](docs/security.md) | Dado sensível em trânsito, conteúdo fora do log, rede e credenciais |
 | 📊 [Logging](docs/logging.md) | Formato de cada linha, todos os campos, os eventos e como rastrear um e-mail |
-| 🔭 [Observabilidade](docs/observability.md) | O que a função registra, como o Datadog coleta e como ligar o e-mail ao pedido que o originou |
+| 🔭 [Observabilidade](docs/observability.md) | O que a função registra, como o Datadog coleta, como ligar o e-mail ao pedido que o originou e o span de cada mensagem |
 | 💻 [Como executar localmente](docs/local-setup.md) | Execução local, MailHog, build e variáveis de ambiente |
 | 🧪 [Testes](docs/testing.md) | Testes unitários e de ponta a ponta, verificação depois do deploy, comportamentos travados por teste e cobertura |
 | 🔁 [CI/CD](docs/ci-cd.md) | Os três workflows, as verificações depois do deploy, a configuração do GitHub e a solução de problemas |
@@ -187,6 +192,7 @@ Todos rodam a partir de `app/`.
 | 📐 [ADR 0001](docs/adr/0001-envio-sem-templates.md) | Envio sem templates, do e-mail montado por quem pede |
 | 📐 [ADR 0002](docs/adr/0002-uma-mensagem-por-invocacao.md) | Uma mensagem por execução, com a ordem por grupo garantida no código |
 | 📐 [ADR 0003](docs/adr/0003-camadas-enxutas-e-empacotamento.md) | Camadas enxutas e empacotamento iguais aos da Lambda customer-auth |
+| 📐 [ADR 0004](docs/adr/0004-span-de-processamento-por-mensagem.md) | Span de processamento por mensagem, enviado à extensão do Datadog por OTLP |
 
 ## 🧩 Ecossistema
 

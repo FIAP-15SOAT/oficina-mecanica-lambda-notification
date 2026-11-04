@@ -1,7 +1,9 @@
 import { ConfigurationException } from '@infrastructure/exceptions/configuration.exception';
 import { SmtpEmailSender } from '@infrastructure/smtp/smtp-email-sender';
+import { NO_OP_TRACING } from '@infrastructure/telemetry/tracing';
 
 import { getDependencies, resetDependencies } from '../../../src/bootstrap';
+import { SAMPLED_PARENT_CONTEXT } from '../../helpers/sqs-event.factory';
 
 const mockLines: string[] = [];
 
@@ -82,5 +84,17 @@ describe('bootstrap', () => {
     process.env.SMTP_HOST = ENVIRONMENT.SMTP_HOST;
 
     expect(getDependencies().sendEmailController).toBeDefined();
+  });
+
+  it('should compose a recording tracing when the exporter endpoint is set', () => {
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://127.0.0.1:4318';
+
+    const span = getDependencies().tracing.tracer.startSpan('probe', {}, SAMPLED_PARENT_CONTEXT);
+
+    expect(span.isRecording()).toBe(true);
+  });
+
+  it('should compose the no-op tracing when the exporter endpoint is absent', () => {
+    expect(getDependencies().tracing).toBe(NO_OP_TRACING);
   });
 });

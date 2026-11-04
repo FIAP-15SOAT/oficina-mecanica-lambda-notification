@@ -19,8 +19,18 @@ lê a fila e entrega a mensagem à função.
 | Grupo da fila FIFO | Numa fila FIFO, mensagens com o mesmo `MessageGroupId` são entregues em ordem, uma por vez. O Work Order usa o id da ordem de serviço (OS) como grupo; o Identity, que não tem OS, usa um grupo por e-mail |
 
 O `traceparent` segue o padrão W3C Trace Context: identifica o trace — o
-registro de uma requisição através dos serviços — em que o serviço estava quando
-pediu o e-mail. A função o usa só para ligar o log do e-mail a esse pedido.
+registro de uma requisição através dos serviços — e o span, a etapa desse trace,
+em que o serviço estava quando pediu o e-mail. A função o usa para ligar o
+e-mail a esse pedido:
+
+- o span da função para a mensagem (`process notification.fifo`) é filho desse
+  span, no mesmo trace;
+- o campo `trace_id` do log da mensagem traz o id do trace.
+
+Sem `traceparent`, ou com um valor inválido ou não amostrado (o serviço decidiu
+não registrar aquele trace), a função envia o e-mail normalmente e não registra
+span; só o não amostrado mantém o `trace_id` no log. Detalhes em
+[Observabilidade](observability.md#o-span-de-cada-mensagem).
 
 ## Formato da mensagem
 

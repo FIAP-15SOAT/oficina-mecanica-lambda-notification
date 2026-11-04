@@ -110,11 +110,12 @@ Todas estão em `app/.env.example`.
 
 | Variável | Obrigatória | Padrão | O que faz |
 | --- | --- | --- | --- |
-| `NODE_ENV` | sim | — | `development`, `test` ou `production`; aparece no log como `deployment.environment.name` |
+| `NODE_ENV` | sim | — | `development`, `test` ou `production`; aparece no log e no span como `deployment.environment.name` |
 | `LOG_LEVEL` | não | `info` | Nível mínimo do log: `fatal`, `error`, `warn`, `info`, `debug`, `trace` ou `silent` |
-| `OTEL_SERVICE_NAME` | não | `oficina-mecanica-lambda-notification` | Nome do serviço no log (`service.name`) |
-| `OTEL_SERVICE_NAMESPACE` | não | `oficina-mecanica` | Grupo do serviço no log (`service.namespace`) |
-| `SERVICE_VERSION` | não | `dev` | Versão no log (`service.version`); na AWS, o CD grava o commit implantado |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | não | — | Endereço que recebe os spans por OTLP/HTTP (o protocolo de envio do OpenTelemetry); na AWS, `http://localhost:4318`, a extensão do Datadog que roda ao lado da função. O span é o registro do processamento de cada mensagem, ligado ao pedido que a originou. Vazia ou ausente, a função não envia span |
+| `OTEL_SERVICE_NAME` | não | `oficina-mecanica-lambda-notification` | Nome do serviço no log e no span (`service.name`) |
+| `OTEL_SERVICE_NAMESPACE` | não | `oficina-mecanica` | Grupo do serviço no log e no span (`service.namespace`) |
+| `SERVICE_VERSION` | não | `dev` | Versão no log e no span (`service.version`); na AWS, o CD grava o commit implantado |
 | `SMTP_HOST` | sim | — | Endereço do servidor SMTP |
 | `SMTP_PORT` | sim | — | Porta do servidor SMTP (1 a 65535) |
 | `MAIL_FROM` | sim | — | Remetente de todo e-mail, por exemplo `"Oficina Mecânica <noreply@oficina.local>"` |

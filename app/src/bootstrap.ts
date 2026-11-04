@@ -9,9 +9,11 @@ import { resolveLoggerConfig } from '@infrastructure/logging/logger.config';
 import { PinoLoggerAdapter } from '@infrastructure/logging/pino-logger.adapter';
 import { TECHNICAL_EVENTS } from '@infrastructure/logging/technical-event.catalog';
 import { SmtpEmailSender } from '@infrastructure/smtp/smtp-email-sender';
+import { createTracing, Tracing } from '@infrastructure/telemetry/tracing';
 
 export interface Dependencies {
   sendEmailController: SendEmailController;
+  tracing: Tracing;
 }
 
 let cached: Dependencies | undefined;
@@ -64,5 +66,6 @@ function compose(): Dependencies {
     sendEmailController: new SendEmailController(
       new SendEmailUseCase(SmtpEmailSender.create(environment)),
     ),
+    tracing: createTracing(),
   };
 }
