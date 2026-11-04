@@ -92,7 +92,7 @@ async function processRecord(
 
 async function processMessage(
   record: SQSRecord,
-  messageAttributes: Record<string, unknown>,
+  logAttributes: Record<string, unknown>,
   span: Span,
   sendEmailController: SendEmailController,
 ): Promise<boolean> {
@@ -105,7 +105,7 @@ async function processMessage(
 
   span.setAttributes(identity);
 
-  const logger = getBaseLogger().withAttributes({ ...messageAttributes, ...identity });
+  const logger = getBaseLogger().withAttributes({ ...logAttributes, ...identity });
 
   const purpose = parsed.purpose ?? UNSPECIFIED_PURPOSE;
 

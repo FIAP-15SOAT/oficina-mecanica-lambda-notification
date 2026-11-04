@@ -17,6 +17,7 @@ const EXPORT_TIMEOUT_MS = 500;
 
 export interface Tracing {
   tracer: Tracer;
+  // Never rejects: a failed export is reported on stderr, so the handler's finally keeps its response
   flush(): Promise<void>;
 }
 

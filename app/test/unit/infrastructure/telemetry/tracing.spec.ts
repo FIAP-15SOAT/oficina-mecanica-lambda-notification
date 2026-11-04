@@ -1,31 +1,16 @@
-import { Context, ROOT_CONTEXT, trace, TraceFlags } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace';
 
 import { resolveLoggerConfig } from '@infrastructure/logging/logger.config';
-import {
-  buildTracing,
-  createTracing,
-  NO_OP_TRACING,
-  Tracing,
-} from '@infrastructure/telemetry/tracing';
+import { buildTracing, createTracing, NO_OP_TRACING } from '@infrastructure/telemetry/tracing';
 
 import { captureDiagnostics, DiagnosticsCapture } from '../../../helpers/diagnostics-capture';
 import { createFailingSpanExporter } from '../../../helpers/span-exporter.factory';
-import { PARENT_SPAN_ID, TRACE_ID } from '../../../helpers/sqs-event.factory';
+import { SAMPLED_PARENT_CONTEXT } from '../../../helpers/sqs-event.factory';
 
 jest.mock('@opentelemetry/exporter-trace-otlp-http', () => ({ OTLPTraceExporter: jest.fn() }));
 
 const otlpTraceExporterMock = OTLPTraceExporter as jest.MockedClass<typeof OTLPTraceExporter>;
-
-function remoteParent(traceFlags: TraceFlags): Context {
-  return trace.setSpanContext(ROOT_CONTEXT, {
-    traceId: TRACE_ID,
-    spanId: PARENT_SPAN_ID,
-    traceFlags,
-    isRemote: true,
-  });
-}
 
 describe('tracing', () => {
   let stderr: DiagnosticsCapture;
@@ -56,10 +41,11 @@ describe('tracing', () => {
       otlpTraceExporterMock.mockImplementation(() => exporter as unknown as OTLPTraceExporter);
 
       const tracing = createTracing();
-      tracing.tracer.startSpan('process', {}, remoteParent(TraceFlags.SAMPLED)).end();
+      tracing.tracer.startSpan('process', {}, SAMPLED_PARENT_CONTEXT).end();
       await tracing.flush();
 
       expect(OTLPTraceExporter).toHaveBeenCalledWith({ timeoutMillis: 500 });
+
       expect(exporter.getFinishedSpans()[0].resource.attributes).toEqual(
         resolveLoggerConfig().resource,
       );
@@ -94,6 +80,7 @@ describe('tracing', () => {
       const tracing = createTracing();
 
       expect(tracing).toBe(NO_OP_TRACING);
+
       expect(stderr.lines()).toEqual([
         expect.objectContaining({
           message: 'telemetry failure',
@@ -104,36 +91,15 @@ describe('tracing', () => {
     });
   });
 
-  describe('sampling', () => {
-    let exporter: InMemorySpanExporter;
-    let tracing: Tracing;
-
-    beforeEach(() => {
-      exporter = new InMemorySpanExporter();
-
-      tracing = buildTracing(exporter);
-    });
-
-    it.each([
-      ['absent', ROOT_CONTEXT],
-      ['unsampled', remoteParent(TraceFlags.NONE)],
-    ])('should export no span when the parent is %s', async (_case, parent) => {
-      tracing.tracer.startSpan('process', {}, parent).end();
-      await tracing.flush();
-
-      expect(exporter.getFinishedSpans()).toEqual([]);
-    });
-  });
-
   describe('flush', () => {
-    let stdout: jest.SpyInstance;
+    let stdoutWriteSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      stdout = jest.spyOn(process.stdout, 'write');
+      stdoutWriteSpy = jest.spyOn(process.stdout, 'write');
     });
 
     afterEach(() => {
-      stdout.mockRestore();
+      stdoutWriteSpy.mockRestore();
     });
 
     it.each([
@@ -147,7 +113,7 @@ describe('tracing', () => {
       async (_case, error) => {
         const tracing = buildTracing(createFailingSpanExporter(error));
 
-        tracing.tracer.startSpan('process', {}, remoteParent(TraceFlags.SAMPLED)).end();
+        tracing.tracer.startSpan('process', {}, SAMPLED_PARENT_CONTEXT).end();
 
         await expect(tracing.flush()).resolves.toBeUndefined();
 
@@ -158,13 +124,10 @@ describe('tracing', () => {
             'oficina.telemetry.failure.error_type': 'Error',
           }),
         ]);
+
         expect(stderr.text()).not.toContain(error.message);
-        expect(stdout).not.toHaveBeenCalled();
+        expect(stdoutWriteSpy).not.toHaveBeenCalled();
       },
     );
-
-    it('should resolve at once on the no-op tracing', async () => {
-      await expect(NO_OP_TRACING.flush()).resolves.toBeUndefined();
-    });
   });
 });

@@ -136,8 +136,7 @@ recusa o que foge do padrão.
 | Inválido: versão `ff`, id do trace ou do span só com zeros, letras maiúsculas ou formato errado | enviado | não | não |
 
 Sem contexto, a função não começa um trace novo: seria um trace solto a cada
-publicação manual, sem nada que o ligasse ao pedido. A mensagem da verificação
-depois do deploy, que não tem `traceparent`, não gera span.
+publicação manual, sem nada que o ligasse ao pedido.
 
 ### O que nunca entra no span
 
@@ -146,7 +145,8 @@ texto de erro do servidor SMTP, que costuma repetir o destinatário. O span não
 registra a exceção nem descreve o erro no status: o motivo da falha vai só em
 `error.type`, e o detalhe fica no log, que passa pela ocultação de dados e se
 liga ao span pelo `trace_id` e pelo `messaging.message.id`. Os atributos saem de
-uma lista fechada no código; nada é copiado da mensagem.
+uma lista fechada no código: nada do conteúdo do e-mail é copiado, e os ids e o
+propósito só entram depois da validação da mensagem.
 
 ### Como o span chega ao Datadog
 
@@ -200,5 +200,6 @@ do CloudWatch mas não no Datadog, a falha é **da coleta**, não da função.
 A mensagem da verificação não tem `traceparent` e, por isso, não gera span; o
 span se confere com uma mensagem que traga o contexto — ver
 [Como conferir o span](#como-conferir-o-span).
+
 Dashboards e alertas ficam em
 [`oficina-mecanica-custom-monitoring`](https://github.com/FIAP-15SOAT/oficina-mecanica-custom-monitoring).

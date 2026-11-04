@@ -35,7 +35,8 @@ O teste então:
    com o atributo `traceparent`;
 2. lê a mensagem da fila `notification.fifo`, como a AWS Lambda faria;
 3. chama o ponto de entrada real da função, com as dependências reais, apontando
-   para o MailHog;
+   para o MailHog e com o envio de spans desligado, porque o teste não tem quem
+   os receba;
 4. confere o e-mail pela API do MailHog.
 
 | Cenário | O que confere |

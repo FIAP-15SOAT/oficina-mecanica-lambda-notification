@@ -1,8 +1,8 @@
 import { resolveErrorTypeName, writeDiagnostic } from '@infrastructure/logging/logging-diagnostics';
 
-export const TELEMETRY_FAILURE_MESSAGE = 'telemetry failure';
+const TELEMETRY_FAILURE_MESSAGE = 'telemetry failure';
 
-export type TelemetryFailureStage = 'startup' | 'export';
+type TelemetryFailureStage = 'startup' | 'export';
 
 // Only the error type: an export error can repeat the receiver address or the payload
 export function reportTelemetryFailure(stage: TelemetryFailureStage, error: unknown): void {

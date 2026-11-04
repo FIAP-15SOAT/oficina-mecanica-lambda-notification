@@ -214,8 +214,8 @@ do e-mail nunca ser passado ao logger.
 Duas falhas da própria observabilidade nunca mudam a execução nem a resposta da
 função. Cada uma escreve uma linha JSON na saída de erro do processo (stderr),
 separada do stdout, onde saem os eventos de log: o aviso não passa pelo caminho
-que acabou de falhar. As duas linhas levam o mesmo `timestamp`, o mesmo `level`
-e os mesmos campos de serviço das linhas de log.
+que acabou de falhar. As duas linhas têm os mesmos campos `timestamp`, `level` e
+de serviço das linhas de log.
 
 | `message` | `level` | Quando | Campos próprios |
 | --- | --- | --- | --- |

@@ -27,6 +27,7 @@ describe('reportTelemetryFailure', () => {
         'oficina.telemetry.failure.error_type': 'Error',
       },
     ]);
+
     expect(stderr.text()).not.toContain('ECONNREFUSED');
   });
 

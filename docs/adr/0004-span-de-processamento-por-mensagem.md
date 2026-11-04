@@ -92,8 +92,8 @@ Rejeitada.
 
 - A favor: menos código de span na função.
 - Contra: precisa ser carregada antes do código da função, com um segundo
-  arquivo no pacote; cria um span por execução, do tipo `SERVER`, com um único
-  pai para todas as mensagens recebidas; os atributos de mensageria e o
+  arquivo no pacote; cria um span por execução, do tipo `SERVER` (o de quem
+  atende uma requisição), com um único pai para todas as mensagens recebidas; os atributos de mensageria e o
   resultado precisariam de código próprio do mesmo jeito.
 
 Rejeitada.

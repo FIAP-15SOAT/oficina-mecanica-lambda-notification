@@ -307,6 +307,7 @@ describe('handler', () => {
         events: [],
       })),
     );
+
     expect(spans).toHaveLength(2);
   });
 
@@ -333,10 +334,12 @@ describe('handler', () => {
     const [span] = spanExporter.getFinishedSpans();
 
     expect(span.status).toEqual({ code: SpanStatusCode.ERROR });
+
     expect(span.attributes).toMatchObject({
       'oficina.notification.outcome': 'retry',
       'error.type': 'smtp_error',
     });
+
     expect(span.events).toEqual([]);
   });
 
@@ -351,6 +354,7 @@ describe('handler', () => {
     const [span] = spanExporter.getFinishedSpans();
 
     expect(span.status).toEqual({ code: SpanStatusCode.ERROR });
+
     expect(span.attributes).toMatchObject({
       'oficina.notification.outcome': 'dead_lettered',
       'error.type': 'invalid_message',
@@ -371,6 +375,7 @@ describe('handler', () => {
       'retry',
       'sent',
     ]);
+
     expect(second.spanContext().traceId).toBe(first.spanContext().traceId);
     expect(second.parentSpanContext?.spanId).toBe(first.parentSpanContext?.spanId);
     expect(second.spanContext().spanId).not.toBe(first.spanContext().spanId);
@@ -412,6 +417,7 @@ describe('handler', () => {
     const response = await handler(buildEvent(...records), buildContext());
 
     expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: records[1].messageId }] });
+
     expect(stderr.lines()).toEqual([
       expect.objectContaining({
         message: 'telemetry failure',

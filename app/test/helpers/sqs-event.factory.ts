@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { ROOT_CONTEXT, trace, TraceFlags } from '@opentelemetry/api';
 import type { Context, SQSEvent, SQSRecord, SQSRecordAttributes } from 'aws-lambda';
 
 import { VALID_PAYLOAD } from './notification-mock.factory';
@@ -8,6 +9,12 @@ export const WORK_ORDER_ID = '3f0b6a6e-2a8b-4c7e-9b7a-1d2e3f4a5b6c';
 export const TRACE_ID = '4bf92f3577b34da6a3ce929d0e0e4736';
 export const PARENT_SPAN_ID = '00f067aa0ba902b7';
 export const TRACEPARENT = `00-${TRACE_ID}-${PARENT_SPAN_ID}-01`;
+export const SAMPLED_PARENT_CONTEXT = trace.setSpanContext(ROOT_CONTEXT, {
+  traceId: TRACE_ID,
+  spanId: PARENT_SPAN_ID,
+  traceFlags: TraceFlags.SAMPLED,
+  isRemote: true,
+});
 
 export function buildEnvelope(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {

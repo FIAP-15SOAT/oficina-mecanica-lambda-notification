@@ -15,6 +15,7 @@ redefinição de senha. Esse dado existe só dentro da mensagem:
 | Mesmas filas | Guardam as mensagens por **1 dia**, menos que as outras filas da solução |
 | Função | Só em memória, durante o envio |
 | Log | **Nunca** — ver abaixo |
+| Span, o registro do processamento de cada mensagem que a função envia ao APM do Datadog (a parte que mostra os traces, o caminho de um pedido entre os serviços) | **Nunca**: só os ids da mensagem e da ordem de serviço, o propósito, o resultado e o tipo do erro; ver [O que nunca entra no span](observability.md#o-que-nunca-entra-no-span) |
 | MailHog | Guarda os e-mails em memória; é um servidor de teste, não uma caixa de e-mail real |
 
 A criptografia e a retenção são configuradas no repositório de mensageria
@@ -26,6 +27,7 @@ A criptografia e a retenção são configuradas no repositório de mensageria
 | --- | --- | --- |
 | Conteúdo do e-mail no log | Uma linha de log com assunto, texto, HTML ou endereço | Esses dados não estão na lista de campos de log permitidos; um teste confere que não aparecem |
 | Destinatário no log pela resposta do servidor | O servidor responde `550 <maria@example.com>: ...` | O adaptador SMTP troca o erro original por `EmailDeliveryException`, sem o texto do servidor; o log registra só o motivo `smtp_error` |
+| Destinatário no span pela resposta do servidor | O mesmo `550 <maria@example.com>: ...` | O span recebe só o motivo `smtp_error`, no atributo `error.type`, sem descrição de status, evento nem exceção; um teste confere que nem o conteúdo do e-mail nem o texto do erro aparecem no span |
 | Conteúdo no log pelo propósito | O serviço escreve algo indevido em `purpose` | Só um valor de letras minúsculas separadas por `_` vai ao log; qualquer outro vira `unspecified` |
 | Envio de um arquivo do servidor por e-mail | `html` ou `text` como `{ "path": ... }` ou `{ "href": ... }`, que o `nodemailer` leria | A validação exige texto; a mensagem é recusada com `invalid_message`. O transporte também não lê arquivo nem URL |
 | E-mail para destinatário não conferido | `to` com vírgula, `;` ou nome de exibição, que o `nodemailer` dividiria em vários endereços | Cada item precisa ser um único endereço |
