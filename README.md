@@ -161,7 +161,8 @@ Todos rodam a partir de `app/`.
 │   ├── diagrams/
 │   │   ├── cd-workflow.png     # Jobs e steps do workflow de CD
 │   │   ├── ci-workflow.png     # Jobs e steps do workflow de CI
-│   │   └── infrastructure.png  # Tópico, fila, DLQ, função, NLB e MailHog
+│   │   ├── infrastructure.png  # Tópico, fila, DLQ, função, NLB e MailHog
+│   │   └── sast-workflow.png   # Job e steps do workflow de SAST
 │   ├── architecture.md         # Camadas, montagem das dependências e fluxo de uma mensagem
 │   ├── ci-cd.md                # Workflows, jobs, steps e configuração do GitHub
 │   ├── contracts.md            # Formato da mensagem, validação e resposta
