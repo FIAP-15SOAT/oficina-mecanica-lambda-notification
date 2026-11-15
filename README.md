@@ -9,7 +9,8 @@ SMTP, sem gravar o conteúdo dele em log.
 ![Node](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![AWS Lambda](https://img.shields.io/badge/AWS%20Lambda-FF9900?logo=awslambda&logoColor=white)
-![Cobertura](https://img.shields.io/badge/cobertura-100%25-brightgreen)
+[![Cobertura](https://sonarcloud.io/api/project_badges/measure?project=FIAP-15SOAT_oficina-mecanica-lambda-notification&metric=coverage)](https://sonarcloud.io/summary/new_code?id=FIAP-15SOAT_oficina-mecanica-lambda-notification)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=FIAP-15SOAT_oficina-mecanica-lambda-notification&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FIAP-15SOAT_oficina-mecanica-lambda-notification)
 
 [![CI](https://github.com/FIAP-15SOAT/oficina-mecanica-lambda-notification/actions/workflows/ci.yml/badge.svg)](https://github.com/FIAP-15SOAT/oficina-mecanica-lambda-notification/actions/workflows/ci.yml)
 [![SAST](https://github.com/FIAP-15SOAT/oficina-mecanica-lambda-notification/actions/workflows/sast.yml/badge.svg)](https://github.com/FIAP-15SOAT/oficina-mecanica-lambda-notification/actions/workflows/sast.yml)
@@ -218,9 +219,6 @@ Identity / Work Order ──publica──▶ tópico oficina-events.fifo ──�
 
 ## 📦 Estado
 
-[![Cobertura](https://sonarcloud.io/api/project_badges/measure?project=FIAP-15SOAT_oficina-mecanica-lambda-notification&metric=coverage)](https://sonarcloud.io/summary/new_code?id=FIAP-15SOAT_oficina-mecanica-lambda-notification)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=FIAP-15SOAT_oficina-mecanica-lambda-notification&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FIAP-15SOAT_oficina-mecanica-lambda-notification)
-
 - **Testes.** Os testes unitários cobrem 100% do código nas quatro métricas de
   cobertura do Jest: linhas, instruções (*statements*), funções e ramos
   (*branches*, cada caminho de um `if` ou operador condicional). Para conferir,
@@ -231,7 +229,8 @@ Identity / Work Order ──publica──▶ tópico oficina-events.fifo ──�
   Package e Terraform Validation — e, se todas passam, um bot abre o Pull
   Request. Os pull requests passam também pela análise estática de código no
   [SonarQube Cloud](https://sonarcloud.io/project/overview?id=FIAP-15SOAT_oficina-mecanica-lambda-notification),
-  que bloqueia o merge quando o portão de qualidade (*quality gate*) reprova.
+  que bloqueia o merge quando o *quality gate* (os critérios que a análise precisa
+  cumprir) reprova.
 - **Entrega.** Depois do merge na `main`, o CD aplica o Terraform e faz duas
   verificações: executa a função publicada com um e-mail de teste e confere que
   esse e-mail chegou ao MailHog do cluster. Detalhes em [CI/CD](docs/ci-cd.md).
