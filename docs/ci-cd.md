@@ -8,7 +8,7 @@ como nos serviços e na customer-auth, a outra função Lambda da solução.
 | Workflow | Arquivo | Quando roda | Termina em |
 | --- | --- | --- | --- |
 | CI | `.github/workflows/ci.yml` | `push` em branches `feature/**` e `fix/**` | Pull Request aberto para a `main` |
-| SAST | `.github/workflows/sast.yml` | Pull Request para a `main` e `push` na `main` | Resultado do portão de qualidade (*quality gate*) do SonarQube Cloud |
+| SAST | `.github/workflows/sast.yml` | Pull Request para a `main` e `push` na `main` | Resultado do *quality gate* do SonarQube Cloud |
 | CD | `.github/workflows/cd.yml` | `push` na `main` e execução manual (opção `action`: `apply`, o padrão, ou `destroy`) | E-mail de teste conferido no MailHog do cluster, ou recursos da função removidos com `action=destroy` |
 
 ## Integração contínua
@@ -91,19 +91,21 @@ a `main`, se ainda não houver um aberto para a branch.
 ## Análise estática (SAST)
 
 O SonarQube Cloud analisa o código em busca de bugs, vulnerabilidades e trechos
-problemáticos, e mede a cobertura de testes. O portão de qualidade é o conjunto
+problemáticos, e mede a cobertura de testes. O *quality gate* é o conjunto
 de critérios que a análise precisa cumprir.
+
+![Workflow de SAST: o Pull Request para a main ou o push na main roda o job SAST, com quatro steps em sequência (Checkout com histórico completo, Setup CI, Unit tests with coverage e SonarQube Scan), e termina no resultado do quality gate do SonarQube Cloud, que reprova o job quando falha](diagrams/sast-workflow.png)
 
 | # | Step | O que faz |
 | --- | --- | --- |
 | 1 | actions/checkout | Baixa o código com o histórico completo (`fetch-depth: 0`), que o SonarQube usa para identificar o código novo |
 | 2 | Setup CI | Node 24, cache do npm e `npm ci` em `app/` |
 | 3 | Unit tests with coverage | `npm run test:cov` gera o relatório de cobertura `app/coverage/lcov.info` na mesma execução |
-| 4 | SonarQube Scan | `sonarqube-scan-action` v8.3.0 analisa `app/` com o `SONAR_TOKEN` e espera o resultado do portão de qualidade |
+| 4 | SonarQube Scan | `sonarqube-scan-action` v8.3.0 analisa `app/` com o `SONAR_TOKEN` e espera o resultado do quality gate |
 
 Só a cobertura dos testes **unitários** vai ao SonarQube Cloud: é ela que deve
 estar em 100%. `sonar.qualitygate.wait=true`, em `app/sonar-project.properties`,
-faz o step falhar quando o portão reprova. Uma análise nova do mesmo PR cancela
+faz o step falhar quando o quality gate reprova. Uma análise nova do mesmo PR cancela
 a anterior. O SAST não depende do CI nem do CD; por ser verificação obrigatória
 da `main`, uma análise reprovada bloqueia o merge.
 
