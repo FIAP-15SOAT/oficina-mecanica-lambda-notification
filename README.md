@@ -250,3 +250,4 @@ Identity / Work Order ──publica──▶ tópico oficina-events.fifo ──�
 
 Projeto acadêmico (FIAP — 15SOAT), para fins educacionais. Sem licença aberta
 declarada (`UNLICENSED`).
+
