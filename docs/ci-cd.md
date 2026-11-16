@@ -109,6 +109,16 @@ faz o step falhar quando o quality gate reprova. Uma análise nova do mesmo PR c
 a anterior. O SAST não depende do CI nem do CD; por ser verificação obrigatória
 da `main`, uma análise reprovada bloqueia o merge.
 
+O SAST tem workflow próprio, disparado pelo Pull Request para a `main` e pelo
+`push` na `main`, porque o [plano gratuito do SonarQube Cloud](https://docs.sonarsource.com/sonarqube-cloud/administering-sonarcloud/managing-subscription/subscription-plans)
+analisa só a branch principal e os Pull Requests para ela, nunca as branches de
+trabalho (`feature/**` e `fix/**`) em que o CI roda. No Pull Request, a análise
+aponta só os problemas que o PR introduz em relação à `main`; no `push` na
+`main`, atualiza a análise da branch principal, que é a referência dessa
+comparação. O PR é aberto pelo GitHub App do bot, e não pelo `GITHUB_TOKEN` do
+workflow, porque um PR criado com o `GITHUB_TOKEN` não dispara outros workflows:
+assim o SAST roda no PR desde o primeiro push.
+
 ## Entrega contínua
 
 ### Condições para rodar
